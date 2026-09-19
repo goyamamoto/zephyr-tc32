@@ -98,6 +98,17 @@ config OPENRISC
 	help
 	  OpenRISC architecture
 
+config TC32
+	bool
+	select ARCH_IS_SET
+	select ATOMIC_OPERATIONS_C
+	select ARCH_SUPPORTS_EMPTY_IRQ_SPURIOUS
+	select ARCH_HAS_CUSTOM_SWAP_TO_MAIN
+	select USE_SWITCH
+	select USE_SWITCH_SUPPORTED
+	help
+	  Telink TC32 architecture
+
 config SPARC
 	bool
 	select ARCH_IS_SET

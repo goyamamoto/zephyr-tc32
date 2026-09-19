@@ -38,6 +38,8 @@
 #include <zephyr/arch/hexagon/arch_inlines.h>
 #elif defined(CONFIG_TRICORE)
 #include <zephyr/arch/tricore/arch_inlines.h>
+#elif defined(CONFIG_TC32)
+#include <zephyr/arch/tc32/arch_inlines.h>
 #elif defined(CONFIG_ARCH_IS_SET)
 #error "The selected architecture is missing from this dispatch header"
 #endif

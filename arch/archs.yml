@@ -38,3 +38,6 @@ archs:
   - name: tricore
     path: tricore
     full_name: TriCore
+  - name: tc32
+    path: tc32
+    full_name: Telink TC32

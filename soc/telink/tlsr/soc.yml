@@ -4,3 +4,6 @@ family:
       - name: tlsr951x
         socs:
           - name: tlsr9518
+      - name: tlsr825x
+        socs:
+          - name: tlsr8258

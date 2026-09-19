@@ -1,0 +1,167 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/pinctrl/tlsr8258-pinctrl.h>
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	clocks {
+		sys_clk: clock-24m {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <24000000>;
+		};
+	};
+
+	pinctrl: pinctrl {
+		compatible = "telink,tlsr8258-pinctrl";
+
+		uart0_tx_default: uart0_tx_default {
+			pinmux = <TLSR8258_PINMUX(TLSR8258_GPIO_PB1,
+						  TLSR8258_FUNC_UART)>;
+			output-enable;
+		};
+
+		uart0_rx_default: uart0_rx_default {
+			pinmux = <TLSR8258_PINMUX(TLSR8258_GPIO_PA0,
+						  TLSR8258_FUNC_UART)>;
+			bias-pull-up;
+			input-enable;
+		};
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			compatible = "telink,tlsr8258-tc32";
+			reg = <0>;
+			clock-frequency = <24000000>;
+			cpu-power-states = <&tlsr8258_suspend>;
+		};
+
+		power-states {
+			tlsr8258_suspend: state0 {
+				compatible = "zephyr,power-state";
+				power-state-name = "suspend-to-idle";
+				min-residency-us = <1000>;
+				exit-latency-us = <250>;
+			};
+		};
+	};
+
+	soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "telink,tlsr8258-soc";
+		ranges;
+
+		intc: interrupt-controller@800640 {
+			compatible = "telink,tlsr8258-intc";
+			reg = <0x00800640 0x0000000c>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+		};
+
+		stimer: stimer@800740 {
+			compatible = "telink,tlsr8258-stimer";
+			reg = <0x00800740 0x00000010>;
+			interrupts = <20>;
+			interrupt-parent = <&intc>;
+			clocks = <&sys_clk>;
+		};
+
+		uart0: serial@800090 {
+			compatible = "telink,tlsr8258-uart";
+			reg = <0x00800090 0x00000010>;
+			interrupts = <6>;
+			interrupt-parent = <&intc>;
+			clocks = <&sys_clk>;
+			clock-frequency = <24000000>;
+			current-speed = <115200>;
+			tx-pin = <TLSR8258_GPIO_PB1>;
+			rx-pin = <TLSR8258_GPIO_PA0>;
+			pinctrl-0 = <&uart0_tx_default &uart0_rx_default>;
+			pinctrl-names = "default";
+			status = "disabled";
+		};
+
+		zb: ieee802154@800f00 {
+			compatible = "telink,tlsr8258-zb";
+			reg = <0x00800f00 0x00000040>;
+			interrupts = <13>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpioa: gpio@800580 {
+			compatible = "telink,tlsr8258-gpio";
+			reg = <0x00800580 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpiob: gpio@800588 {
+			compatible = "telink,tlsr8258-gpio";
+			reg = <0x00800588 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpioc: gpio@800590 {
+			compatible = "telink,tlsr8258-gpio";
+			reg = <0x00800590 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpiod: gpio@800598 {
+			compatible = "telink,tlsr8258-gpio";
+			reg = <0x00800598 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpioe: gpio@8005a0 {
+			compatible = "telink,tlsr8258-gpio";
+			reg = <0x008005a0 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		aes: aes@800540 {
+			compatible = "telink,tlsr8258-aes";
+			reg = <0x00800540 0x00000020>;
+		};
+
+		sram0: memory@840000 {
+			compatible = "mmio-sram";
+			reg = <0x00840000 0x00010000>;
+		};
+
+		flash: flash@0 {
+			compatible = "telink,tlsr8258-flash";
+			reg = <0x00000000 0x00080000>;
+			write-block-size = <1>;
+		};
+	};
+};

@@ -45,6 +45,8 @@ elseif("${ARCH}" STREQUAL "hexagon")
   set(triple hexagon-none-elf)
 elseif("${ARCH}" STREQUAL "tricore")
   set(triple tricore-unknown-elf)
+elseif("${ARCH}" STREQUAL "tc32")
+  set(triple tc32-unknown-none-elf)
 endif()
 
 if(DEFINED triple)

@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_TLSR825X
+	bool
+	select SOC_FAMILY_TELINK_TLSR
+	help
+	  Telink TLSR825x
+
+config SOC_TLSR8258
+	bool
+	select SOC_SERIES_TLSR825X
+	help
+	  Telink TLSR8258
+
+config SOC_SERIES
+	default "tlsr825x" if SOC_SERIES_TLSR825X
+
+config SOC
+	default "tlsr8258" if SOC_TLSR8258

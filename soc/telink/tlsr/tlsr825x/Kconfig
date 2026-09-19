@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_TLSR825X
+	bool
+	select TC32
+	select HAS_TELINK_DRIVERS
+	select HAS_PM
+	select ARCH_HAS_RAMFUNC_SUPPORT if XIP
+	select SOC_PREP_HOOK
+	imply XIP
+
+if SOC_SERIES_TLSR825X
+
+config SOC_TLSR8258
+	bool
+
+config SOC_SERIES_TLSR825X_PM
+	bool "TLSR825x system PM support"
+	default y
+	depends on PM
+
+config TLSR8258_PM_RC32K
+	bool "Use RC32K PM backend"
+	default y
+	depends on SOC_SERIES_TLSR825X_PM
+
+config TLSR8258_PM_TIMER_WAKEUP
+	bool "Enable 32k timer wakeup in PM"
+	default y
+	depends on SOC_SERIES_TLSR825X_PM
+
+config TLSR8258_PM_GPIO_WAKEUP
+	bool "Enable GPIO wakeup helpers in PM"
+	default y
+	depends on SOC_SERIES_TLSR825X_PM
+
+config TLSR8258_PM_DEEP_RETENTION
+	bool "Enable deep-retention PM API surface"
+	default n
+	depends on SOC_SERIES_TLSR825X_PM
+	help
+	  Reserved for tlsr8258_pm_deep_retention_for_ms(). Not implemented
+	  yet: unlike suspend/deep-sleep, resuming from a deep sleep with
+	  SRAM retention re-enters the reset vector instead of returning from
+	  a function call, which needs a warm-resume mechanism this port does
+	  not have. tlsr8258_pm_deep_retention_for_ms() always returns
+	  -ENOTSUP.
+
+config TLSR8258_PM_SHUTDOWN
+	bool "Enable shutdown PM API surface"
+	default n
+	depends on SOC_SERIES_TLSR825X_PM
+	help
+	  Reserved for the TLSR8258 Shutdown mode. Not implemented yet:
+	  tlsr8258_pm_shutdown_for_ms() always returns -ENOTSUP.
+
+endif # SOC_SERIES_TLSR825X

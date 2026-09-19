@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TLSR8258 system timer
+
+compatible: "telink,tlsr8258-stimer"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  interrupt-parent:
+    required: true
+
+  clocks:
+    required: true

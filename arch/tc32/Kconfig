@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "TC32 Options"
+	depends on TC32
+
+config ARCH
+	string
+	default "tc32"
+
+config GEN_ISR_TABLES
+	default y
+
+config GEN_IRQ_VECTOR_TABLE
+	default n
+
+config GEN_SW_ISR_TABLE
+	default y
+
+config ARCH_HAS_SINGLE_THREAD_SUPPORT
+	default y if !SMP
+
+config TC32_BOOT_MIRROR_SIZE
+	hex "TC32 boot mirror SRAM reserve size"
+	default 0x4000
+	help
+	  Size of the low SRAM window reserved for the TLSR boot-ROM flash
+	  mirror. Under the current XIP startup flow this window must cover the
+	  small reset/IRQ bootstrap prefix and the adjacent low-SRAM instruction
+	  cache tag/data scratch area used by the TLSR825x flash execution path
+	  before normal RAM placement begins.
+
+endmenu
