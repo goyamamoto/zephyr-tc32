@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 watchdog: Timer2 as watchdog (DS-TLSR8278 5.1.6). The registers
+  are the timers' control word and status octet (0x620-0x623) and Timer2's
+  count (0x638-0x63b).
+
+compatible: "telink,b87-watchdog"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

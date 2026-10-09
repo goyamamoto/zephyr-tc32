@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config WDT_TELINK_B87
+	bool "Telink TLSR8278 watchdog (Timer2) driver"
+	default y
+	depends on DT_HAS_TELINK_B87_WATCHDOG_ENABLED
+	select HAS_WDT_NO_CALLBACKS
+	select HAS_WDT_DISABLE_AT_BOOT
+	help
+	  Timer2 as watchdog: one timeout of 2^18 system clock cycles times a
+	  14-bit capture (about 5.5 ms to 89 s at 48 MHz), no callback, a
+	  reset of the chip when it expires. The watchdog stops while the chip
+	  is in suspend. With WDT_DISABLE_AT_BOOT the driver stops a watchdog
+	  that runs at boot (SOC_TLSR8278_EARLY_WATCHDOG_MS); without it, a
+	  running watchdog is left as it is until the application installs
+	  its timeout and calls wdt_setup().

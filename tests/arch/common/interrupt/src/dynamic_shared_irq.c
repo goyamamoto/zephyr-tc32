@@ -6,6 +6,8 @@
 
 #include "test_shared_irq.h"
 
+#ifndef NO_TRIGGER_FROM_SW
+
 struct shared_irq_fixture {
 	unsigned int irq1;
 	unsigned int irq2;
@@ -233,3 +235,22 @@ ZTEST_SUITE(shared_irq_feature, NULL,
 	    dynamic_shared_irq_suite_before,
 	    dynamic_shared_irq_suite_after,
 	    NULL);
+
+#else /* NO_TRIGGER_FROM_SW */
+
+/* The suite finds its interrupt lines, and checks the shared ISRs, by
+ * triggering interrupts from software, which this architecture cannot do.
+ */
+ZTEST(shared_irq_feature, test_dynamic_shared_irq_write)
+{
+	ztest_test_skip();
+}
+
+ZTEST(shared_irq_feature, test_dynamic_shared_irq_disconnect_write)
+{
+	ztest_test_skip();
+}
+
+ZTEST_SUITE(shared_irq_feature, NULL, NULL, NULL, NULL, NULL);
+
+#endif /* NO_TRIGGER_FROM_SW */

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink B87 system timer
+
+compatible: "telink,b87-stimer"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  interrupt-parent:
+    required: true

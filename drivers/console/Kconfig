@@ -261,6 +261,18 @@ config XTENSA_SIM_CONSOLE
 	help
 	  Use simulator console to print messages.
 
+config TC32EMU_CONSOLE
+	bool "TC32 emulator console (emulator images only)"
+	depends on TC32
+	# The UART console installs its own printk and stdout hooks.
+	depends on !UART_CONSOLE
+	select CONSOLE_HAS_DRIVER
+	help
+	  printk and stdout as bytes written one at a time to address 0x80fff0,
+	  where TC32-devtools' emulator (run-boot --console) reads them. The
+	  address is not a register of the chip: enable this only for images
+	  that run in the emulator, such as test builds.
+
 config POSIX_ARCH_CONSOLE
 	bool "Use the host terminal for console"
 	depends on ARCH_POSIX

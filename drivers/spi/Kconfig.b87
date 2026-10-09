@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SPI_TELINK_B87
+	bool "Telink TLSR8278 SPI master driver"
+	default y
+	depends on DT_HAS_TELINK_B87_SPI_ENABLED
+	depends on CLOCK_CONTROL
+	select PINCTRL
+	help
+	  The SPI master (DS-TLSR8278 7.4): modes 0-3, 8-bit frames, MSB
+	  first, a clock of the system clock / ((divider + 1) * 2). The
+	  master sends or receives an octet, not both: a transfer sends its
+	  TX frames, then receives the RX frames that come after them; one
+	  that would keep what comes in while it sends is refused. The chip
+	  select is a GPIO or the master's own (active low). Its module clock
+	  comes from the clock control driver (CLOCK_CONTROL, the clk node).

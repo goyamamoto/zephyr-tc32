@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+board:
+  name: tlsr8278_generic
+  full_name: TLSR8278 Generic (build-only)
+  vendor: telink
+  socs:
+  - name: tlsr8278

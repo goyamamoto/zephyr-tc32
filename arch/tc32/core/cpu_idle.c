@@ -5,20 +5,20 @@
 #include <zephyr/irq.h>
 #include <zephyr/tracing/tracing.h>
 
-#include <tlsr825x/irq.h>
+#include <tlsr827x/irq.h>
 
 /*
- * Both entry points must return only once an interrupt has been taken.
- * Unlocking and returning straight away, as this used to do, breaks every
+ * arch_cpu_idle(), and arch_cpu_atomic_idle() with interrupts unlocked by
+ * its key, return only once an interrupt has been taken. Unlocking and returning straight away, as this used to do, breaks every
  * caller that treats k_cpu_idle() as "block until something happens" and
  * leaves the idle loop spinning through the scheduler on every pass.
  *
  * This still burns the cycles rather than stopping the core. The chip can
- * stall on reg_pwdn_ctrl bit 7, but it only resumes from the sources armed
- * in reg_mcu_wakeup_mask (0x78) - timers, GPIO, comparator - and the radio
- * is not among them; the suspend path even masks ZB_RT off before stalling.
- * Wiring that into the idle path would let the node sleep through an RF
- * interrupt, so it needs its wake coverage established on hardware first.
+ * stall the MCU with 0x6f bit 7 (DS-TLSR8278 Table 2-3); the suspend path
+ * that does so sets its wake sources in 0x78 (not documented) and masks
+ * ZB_RT off before stalling. Wiring that into the idle path could let the
+ * node sleep through an RF interrupt, so it needs its wake coverage
+ * established on hardware first.
  */
 static ALWAYS_INLINE void tc32_wait_for_interrupt(unsigned int key)
 {
@@ -52,7 +52,15 @@ void arch_cpu_atomic_idle(unsigned int key)
 		sys_trace_idle();
 	}
 
-	tc32_wait_for_interrupt(key);
+	if (arch_irq_unlocked(key)) {
+		/* Unlocked as the key says, back once an interrupt was taken. */
+		tc32_wait_for_interrupt(key);
+	} else {
+		/* Interrupts stay locked: back once a source is pending. */
+		while ((*TLSR827X_REG_IRQ_SRC & tlsr827x_irq_mask_read() &
+			TLSR827X_IRQ_VALID_MASK) == 0u) {
+		}
+	}
 
 	if (IS_ENABLED(CONFIG_TRACING)) {
 		sys_trace_idle_exit();

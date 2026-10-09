@@ -1,0 +1,38 @@
+zephyr-tc32: Zephyr for the Telink TC32 (TLSR8278)
+
+This repository is a fork of the Zephyr Project RTOS
+(https://github.com/zephyrproject-rtos/zephyr), licensed under the Apache
+License, Version 2.0 (LICENSE, LICENSES/Apache-2.0.txt). Upstream's files and
+their notices are unchanged. The whole tree is distributed under the Apache
+License, Version 2.0, with the exception noted in item 3.
+
+Added on top of upstream Zephyr v4.5.0-rc1:
+
+1. The TC32 architecture layer: arch/tc32, the Telink SoC series
+   (soc/telink/tlsr/tlsr827x), the GPIO and system timer drivers
+   (drivers/gpio/gpio_b87.c, drivers/timer/telink_b87_timer.c), their
+   devicetree bindings and the base of dts/tc32/telink/tlsr8278.dtsi.
+   Author: Ivan Belokobylskiy (devbis), from "Zephyr for the TLSR8258 and
+   Zigbee", https://github.com/devbis/zephyr-tlsr8258. Apache License 2.0.
+   The files keep the headers that project gave them.
+
+2. TLSR8278 support, the build with a mainstream clang for ARMv4T Thumb, the
+   USB device controller driver, the 64-bit division and constant-divisor
+   conversions, the emulator log backend, P-256 for LE Secure Connections
+   (lib/crypto, the public key engine driver) and the tests under
+   tests/arch/tc32 and tests/crypto (TC32.md lists them).
+   Copyright (c) 2026 Go Yamamoto
+   SPDX-License-Identifier: Apache-2.0
+
+3. arch/tc32/core/softfloat: the C implementations of compiler-rt's
+   floating-point builtins, unchanged from the LLVM Project
+   (llvm-project llvmorg-23.1.2, compiler-rt/lib/builtins).
+   Part of the LLVM Project, under the Apache License v2.0 with LLVM
+   Exceptions (LICENSES/Apache-2.0.txt, LICENSES/LLVM-exception.txt).
+
+4. lib/crypto/p256-m: p256-m, the constant-time P-256 implementation as
+   TF-PSA-Crypto 1.1.1 carries it, with the changes its header states for a
+   build without Mbed TLS.
+   Copyright The Mbed TLS Contributors. Author: Manuel Pégourié-Gonnard.
+   SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
+   (LICENSES/Apache-2.0.txt, LICENSES/GPL-2.0-or-later.txt)

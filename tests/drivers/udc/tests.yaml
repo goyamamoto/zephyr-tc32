@@ -29,3 +29,13 @@ tests:
       - native_sim/native/64
     integration_platforms:
       - native_sim/native/64
+  drivers.usb.udc.b87_sim:
+    extra_args:
+      - EXTRA_DTC_OVERLAY_FILE="udc_b87_sim.overlay"
+    extra_configs:
+      - CONFIG_UDC_TELINK_B87_SIM=y
+    platform_allow:
+      - native_sim
+      - native_sim/native/64
+    integration_platforms:
+      - native_sim

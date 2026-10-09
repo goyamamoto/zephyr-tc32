@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Go Yamamoto
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 public key engine (DS-TLSR8278 16): elliptic curve point
+  multiplication and point checks on 256-bit prime curves. The first reg entry
+  is the register block (Table 16-2), the second operand RAM A and the third
+  operand RAM B (Table 16-1, the ten 256-bit slots of each). tc32_p256.h
+  (SOC_TLSR8278_PKE) drives it for P-256.
+
+compatible: "telink,b87-pke"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

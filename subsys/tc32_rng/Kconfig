@@ -1,0 +1,207 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config TC32_AES128
+	bool "AES-128 block encryption: tc32_aes128_encrypt()"
+	depends on SOC_SERIES_TLSR827X
+	help
+	  tc32_aes128_encrypt() (include/zephyr/crypto/tc32_aes.h): one AES-128
+	  block encryption for tc32_rng and for other users such as a BLE
+	  stack, so that an image holds one AES.
+
+if TC32_AES128
+
+choice TC32_AES128_IMPL
+	prompt "tc32_aes128_encrypt() implementation"
+	default TC32_AES128_HW_BLOCK if SOC_TLSR8278
+	default TC32_AES128_SOFTWARE
+
+config TC32_AES128_HW_BLOCK
+	bool "The TLSR8278's AES block"
+	depends on SOC_TLSR8278
+	help
+	  The TLSR8278's AES block (DS-TLSR8278 15), with interrupts off for
+	  each block (about 1000 system clock cycles). tc32_rng's known-answer
+	  test checks it at init and gives nothing out if it answers wrong.
+
+config TC32_AES128_SOFTWARE
+	bool "Software"
+	help
+	  AES-128 in software: the S-box a 256-byte table in flash, the round
+	  keys computed on the fly.
+
+endchoice
+
+endif # TC32_AES128
+
+menuconfig TC32_RNG
+	bool "tc32_rng: the TLSR8278's random number generator"
+	depends on SOC_TLSR8278
+	select TC32_AES128
+	help
+	  A random number generator of its own (include/zephyr/random/tc32_rng.h),
+	  next to Zephyr's random subsystem, which it leaves alone: it provides
+	  neither sys_rand_get() nor sys_csrand_get(). It mixes several sources
+	  into a CBC-MAC pool, reseeds an AES-128-CTR generator with fast key
+	  erasure from it, keeps a seed record across power cycles through hooks
+	  the application provides, and gives nothing out for cryptographic use
+	  until 128 credited bits have been absorbed since boot. The TRNG (the
+	  rbg node, telink,b87-rbg) is one of its sources, read by it only.
+	  Init at POST_KERNEL (TC32_RNG_INIT_PRIORITY), after the boot is
+	  counted: the known-answer test, the seed record, a short jitter
+	  collection and the record's replacement.
+
+if TC32_RNG
+
+config TC32_RNG_JITTER_SAMPLES_PER_BIT
+	int "Jitter samples per bit of credit"
+	default 16
+	range 1 1024
+	help
+	  The credit of the 32 kHz RC oscillator's jitter: one bit per this
+	  many samples. A sample is the system timer, in 0.5 us steps, at a
+	  change of the 32 kHz timer's count. 16 (1/16 bit per sample) is the
+	  min-entropy of a quantized phase whose period-to-period jitter is
+	  about 25 ns rms: the chance that the jitter moves the edge across a
+	  0.5 us step is then about 4 %, -log2(0.96) = 0.06 bit. The figure is
+	  an assumption until samples recorded on the chip are assessed with
+	  the estimators of NIST SP 800-90B 6.3 (TC32_RNG_JITTER_DUMP).
+
+config TC32_RNG_JITTER_CHUNK
+	int "Jitter samples per request while not ready"
+	default 256
+	help
+	  While the generator is not ready (a first boot, a lost seed record),
+	  each tc32_rng_get() and tc32_rng_get_key_material() takes this many
+	  samples (about 31 us each), and with TC32_RNG_ADC 512 ADC codes,
+	  before it returns -EAGAIN; tc32_rng_collect() takes such rounds
+	  until the generator is ready.
+
+config TC32_RNG_ADC
+	bool "The ADC's noise on VBAT as a credited source"
+	default y
+	help
+	  Conversions of VBAT, the chip's own supply (no part outside the
+	  chip), by the SAR ADC through DFIFO2: their low bits carry the ADC's
+	  thermal noise. Each window of 512 codes whose health tests pass (NIST
+	  SP 800-90B Repetition Count and Adaptive Proportion Tests on the
+	  differences of consecutive codes) is credited at
+	  TC32_RNG_ADC_SAMPLES_PER_BIT; a window that fails is absorbed with
+	  no credit. The application that measures with the ADC too (a
+	  battery level) provides tc32_rng_adc_lock() and
+	  tc32_rng_adc_unlock(); every setting is put back after each use.
+
+config TC32_RNG_ADC_SAMPLES_PER_BIT
+	int "ADC codes per bit of credit"
+	depends on TC32_RNG_ADC
+	default 16
+	range 1 1024
+	help
+	  The credit of a code in a window that passed: one bit per this many.
+	  16 (1/16 bit per code) is the jitter's rate, an assumption until
+	  codes recorded on the chip (TC32_RNG_ADC_DUMP) are assessed with the
+	  estimators of NIST SP 800-90B 6.3. The health tests need about 1 LSB
+	  rms of noise to pass at all.
+
+config TC32_RNG_RESEED_ADC
+	int "ADC codes in each reseed and at init"
+	depends on TC32_RNG_ADC
+	default 16
+	help
+	  Absorbed with no credit (fewer than a health-test window).
+
+config TC32_RNG_COLLECT_TIMEOUT_MS
+	int "Longest tc32_rng_collect(), in ms"
+	default 250
+	range 10 60000
+	help
+	  tc32_rng_collect() returns -ETIMEDOUT when the generator is not ready
+	  after this long (checked between rounds of TC32_RNG_JITTER_CHUNK
+	  samples and an ADC window, so it may run one round longer): 250 ms is
+	  about 4 times the 63 ms that 128 bits take from the jitter alone at
+	  1/16 bit per sample. A jitter collection gives up at once when the
+	  32 kHz count has not changed for 4 of its periods (read again then:
+	  a count that moved while the caller was held up is a missed edge,
+	  and the collection goes on); a round in which that happened and the
+	  ADC credited nothing ends the collection, and so every request while
+	  not ready, at once. What was taken keeps its credit; the generator
+	  stays not ready and a later call goes on.
+
+config TC32_RNG_RESEED_JITTER
+	int "Jitter samples in each reseed and at init"
+	default 16
+
+config TC32_RNG_RESEED_INTERVAL
+	int "Reseed interval of tc32_rng_get(), in 1.05 s units"
+	default 57
+	range 1 255
+	help
+	  tc32_rng_get() reseeds when this many units of 2^24 system timer
+	  ticks (1.05 s) have passed since the last reseed, counted modulo 256
+	  (57: about a minute, as Linux's CRNG_RESEED_INTERVAL).
+	  tc32_rng_get_key_material() always reseeds.
+
+config TC32_RNG_TRNG_BYTES
+	int "TRNG bytes per reseed"
+	default 16
+	range 16 64
+	help
+	  Bytes of the TRNG's raw output absorbed at each reseed, at init and
+	  in each chunk while not ready (a multiple of 16).
+
+config TC32_RNG_TRNG_CREDIT
+	bool "Credit the TRNG while its health tests pass"
+	depends on DT_HAS_TELINK_B87_RBG_ENABLED
+	help
+	  Runs the continuous health tests of NIST SP 800-90B 4.4 on the
+	  TRNG's words (Repetition Count Test, Adaptive Proportion Test, for a
+	  claimed 8 bits of min-entropy per 32-bit word) and a start-up test
+	  over 1024 words before the first use, and credits 1 bit per byte
+	  absorbed (half the claim) while no test has failed since boot. Off,
+	  the TRNG is mixed in with no credit and the generator's security
+	  never depends on it.
+
+config TC32_RNG_EVENT_CREDIT
+	int "Credit of one tc32_rng_add_event(), in 1/16 bit"
+	default 0
+	range 0 16
+	help
+	  0 by default. A matrix scan quantizes a key press to its period and
+	  a host sees the reports at that granularity; radio and USB times
+	  follow schedules an observer knows. Linux credits interrupt timing
+	  at about 1 bit per 64 events (1/4 of a sixteenth here).
+
+config TC32_RNG_INIT_PRIORITY
+	int "Init priority (POST_KERNEL)"
+	default 90
+	help
+	  After whatever tc32_rng_seed_load(), tc32_rng_seed_store() and
+	  tc32_rng_device_id() need (a flash driver).
+
+config TC32_RNG_JITTER_DUMP
+	bool "tc32_rng_jitter_samples(): raw jitter samples, for measurement"
+	help
+	  For assessing the jitter's min-entropy on the chip with the
+	  estimators of NIST SP 800-90B. Measurement images only.
+
+config TC32_RNG_ADC_DUMP
+	bool "tc32_rng_adc_samples(): raw ADC codes, for measurement"
+	depends on TC32_RNG_ADC
+	help
+	  For assessing the ADC codes' min-entropy on the chip with the
+	  estimators of NIST SP 800-90B. Measurement images only.
+
+config TC32_RNG_READINESS
+	bool "tc32_rng_get_readiness(): readiness and ADC window counts"
+	help
+	  The state, the credited bits, whether the seed record counted at
+	  init, and the ADC windows credited and refused (by the range check,
+	  by the health tests) since boot; nothing secret. Measurement images
+	  only.
+
+config TC32_RNG_TEST
+	bool "tc32_rng_get_status() and tc32_rng_reinit(), for tests"
+	help
+	  Test hooks; tc32_rng_get_status() shows the generator's key. Not for
+	  production images.
+
+endif # TC32_RNG

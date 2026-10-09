@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: tlsr8278_generic
+name: Telink TLSR8278 Generic (build-only)
+type: mcu
+arch: tc32
+toolchain:
+  - host
+# TC32-devtools' emulator, through the `run` target of cmake/emu/tc32emu.cmake
+simulation:
+  - name: custom
+ram: 64
+flash: 1024
+supported:
+  - adc
+  - flash
+  - gpio
+  - usbd
+  - watchdog
+vendor: telink

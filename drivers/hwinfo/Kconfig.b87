@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config HWINFO_TELINK_B87
+	bool "Telink TLSR8278 hwinfo driver"
+	default y
+	depends on DT_HAS_TELINK_B87_HWINFO_ENABLED
+	select HWINFO_HAS_DRIVER
+	select SOC_TLSR8278_MSPI
+	help
+	  The device ID is the 128-bit unique ID of the internal flash, read
+	  with the flash's command 0x4b from SRAM with interrupts locked. The
+	  reset cause is taken at boot: RESET_WATCHDOG when the watchdog's
+	  reset status bit (0x72 bit 0) is set, RESET_LOW_POWER_WAKE when a
+	  wakeup status bit of analog register 0x44 is (a wake from deep
+	  sleep), RESET_POR when neither is. A reset by software (0x6f bit 5)
+	  or by the RESETB pin sets no flag the chip documents, so it reads as
+	  RESET_POR as well. hwinfo_clear_reset_cause() clears both flags and
+	  the cause taken at boot.

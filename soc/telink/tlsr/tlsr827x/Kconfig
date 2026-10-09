@@ -1,0 +1,144 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_TLSR827X
+	bool
+	select TC32
+	select HAS_TELINK_DRIVERS
+	select ARCH_HAS_RAMFUNC_SUPPORT if XIP
+	imply XIP
+
+if SOC_SERIES_TLSR827X
+
+config SOC_TLSR8278
+	bool
+	select SOC_EARLY_INIT_HOOK
+
+config SOC_TLSR8278_SUSPEND
+	bool "TLSR8278 suspend: tlsr8278_suspend()"
+	depends on SOC_TLSR8278
+	help
+	  tlsr8278_suspend() (tlsr8278_suspend.h): the chip's suspend mode
+	  with wake on pads, the digital core (USB) or the 32 kHz timer. RAM
+	  and registers are kept and execution goes on after the call; the
+	  system timer is restored from the 32 kHz timer. Deep sleep and deep
+	  retention (a wake through the boot ROM) are not provided.
+
+config SOC_TLSR8278_DEEP_SLEEP
+	bool "TLSR8278 deep sleep: tlsr8278_deep_sleep()"
+	depends on SOC_TLSR8278_SUSPEND
+	help
+	  tlsr8278_deep_sleep() (tlsr8278_suspend.h): deep sleep with the wake
+	  sources the caller gives (analog 0x26), no timer wake. The chip wakes
+	  through the boot ROM, as from a reset.
+
+config SOC_TLSR8278_IDLE_SUSPEND
+	bool "TLSR8278 suspend in the idle thread: tlsr8278_idle_suspend()"
+	depends on SOC_TLSR8278_SUSPEND && TICKLESS_KERNEL
+	select ARCH_HAS_CUSTOM_CPU_IDLE
+	help
+	  tlsr8278_idle_suspend() (tlsr8278_suspend.h): while an application
+	  allows it, arch_cpu_idle() suspends the chip until just before the
+	  next kernel timeout or a pad (between BLE connection events, for
+	  example). Not through Zephyr's PM, whose policy runs with interrupts
+	  off at every idle entry.
+
+if SOC_TLSR8278_IDLE_SUSPEND
+
+config SOC_TLSR8278_IDLE_SUSPEND_MIN_US
+	int "Shortest suspend worth entering, in us"
+	default 3000
+
+config SOC_TLSR8278_IDLE_SUSPEND_EARLY_US
+	int "How much earlier than the next kernel timeout the suspend ends, in us"
+	default 1000
+
+endif
+
+config SOC_TLSR8278_RADIO
+	bool "TLSR8278 radio: tlsr_radio.h"
+	depends on SOC_TLSR8278 && DT_HAS_TELINK_B87_RADIO_ENABLED
+	help
+	  tlsr_radio.c: the radio's registers for BLE 1M (advertising and
+	  connection events, the TX FIFO, SN and NESN, the RF DMA) and for
+	  the private 2M mode, the TX power level and the channels. The radio
+	  registers (0x400-0x4ff, 0xc08-0xc2d, 0xf00-0xf2f, 0x1220-0x134f) are
+	  not in DS-TLSR8278; the comments give what the code writes, reads
+	  or waits for. No interrupt handler: the user connects the RF
+	  interrupt (TLSR_RADIO_IRQ). tlsr_analog.h gives the analog register
+	  port.
+
+config SOC_TLSR8278_MSPI
+	bool
+	depends on SOC_TLSR8278
+	help
+	  Transactions with the internal SPI flash from SRAM
+	  (tlsr8278_mspi.h): a read with a command, an address and dummy
+	  octets, and a write (program, erase, status) with the wait for its
+	  end. Selected by the drivers that talk to the flash itself: the
+	  flash driver and the hwinfo driver (the flash's unique ID).
+
+config SOC_TLSR8278_PKE
+	bool
+	depends on SOC_TLSR8278 && DT_HAS_TELINK_B87_PKE_ENABLED
+	help
+	  Selected by TC32_P256_PKE. tlsr_pke.c: P-256 point multiplication (a public key from a private
+	  key, an ECDH shared secret) and the check that a point is on the
+	  curve, on the public key engine (DS-TLSR8278 16), polled: a request
+	  starts the engine and a later call takes the result, so a thread can
+	  go on with other work meanwhile. The engine's clock runs only while
+	  an operation is under way, and its operand RAM is cleared after each
+	  one. Coordinates and scalars are 32 little-endian octets, as the
+	  Bluetooth SMP PDUs carry them.
+
+config SOC_TLSR8278_PKE_TIMEOUT_MS
+	int "Longest wait of tc32_p256_mul() and tc32_p256_verify(), in ms"
+	default 2000
+	depends on SOC_TLSR8278_PKE
+	help
+	  The blocking calls give up with -ETIMEDOUT when the engine has not
+	  finished after this long; the engine's time per operation is not in
+	  the datasheet.
+
+config SOC_TLSR8278_ASM_SETUP
+	bool "SoC setup from setup/tlsr8278_setup.S (chip_init, clock_init)"
+	depends on SOC_TLSR8278
+	default y
+	help
+	  soc_early_init_hook() runs chip_init(0x43, 0) and clock_init(0x20)
+	  from setup/tlsr8278_setup.S, instead of this file's C that repeats their
+	  register writes. Their variables are blocks of this image. The wait
+	  for analog 0x88 bit 7 has no bound. The early watchdog is armed
+	  before it either way.
+
+config SOC_TLSR8278_STARTUP
+	bool
+	depends on SOC_TLSR8278 && XIP
+	default y
+	help
+	  The vectors and the startup from reset to z_cstart come from
+	  setup/tlsr8278_startup.S:
+	  the header word 0x0088000d at 0x0c, the loader that brings the rest
+	  of the RAM code into SRAM through register 0x608, then flash command
+	  0xab, the mode stacks, .bss, the cache tags and base, .data and the
+	  call to z_cstart. With SOC_TLSR8278_EARLY_WATCHDOG_MS the entry arms
+	  the watchdog first (DS-TLSR8278 5.1.6), so all of it, and everything
+	  of this image that follows, runs under the watchdog. .ramfunc must be
+	  empty and .bss and .data word aligned (the linker script asserts
+	  both).
+
+config SOC_TLSR8278_EARLY_WATCHDOG_MS
+	int "TLSR8278 watchdog from the start of the SoC setup (ms, 0 off)"
+	depends on SOC_TLSR8278
+	default 0
+	help
+	  Start the Timer2 watchdog with this period in soc_early_init_hook(),
+	  before the analog setup, the crystal wait and the clock switch (with
+	  SOC_TLSR8278_STARTUP also at the reset entry, before the
+	  startup code; soc_early_init_hook() then starts the period again), so a
+	  boot that hangs before the code that owns the watchdog later (a boot
+	  guard at POST_KERNEL) is reset instead of staying stuck. The period
+	  is computed for the 48 MHz system clock the SoC setup sets; nothing
+	  feeds the watchdog until the owner takes it over, so it must exceed
+	  the boot time to that point.
+
+endif # SOC_SERIES_TLSR827X

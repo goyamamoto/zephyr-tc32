@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 SAR ADC (DS-TLSR8278 12), its misc channel, with the DMA that
+  brings its codes to SRAM (DFIFO2, 0xb08-0xb1f). Channels name their
+  positive input with zephyr,input-positive: 1-8 PB0-PB7, 9 PC4, 10 PC5;
+  a differential channel names its negative input the same way.
+
+compatible: "telink,b87-adc"
+
+include: adc-controller.yaml
+
+properties:
+  reg:
+    required: true
+
+  "#io-channel-cells":
+    const: 1
+
+io-channel-cells:
+  - input

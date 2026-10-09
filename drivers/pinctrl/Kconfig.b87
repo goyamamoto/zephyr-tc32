@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config PINCTRL_TELINK_B87
+	bool "Telink TLSR8278 pin controller driver"
+	default y
+	depends on DT_HAS_TELINK_B87_PINCTRL_ENABLED
+	help
+	  Sets a pin's function (DS-TLSR8278 Table 7-1) and turns its GPIO
+	  function off, or gives it back to the GPIO function; selects the
+	  SPI or the I2C on the pins the two share (Table 7-3); sets its pull
+	  resistor and input enable.

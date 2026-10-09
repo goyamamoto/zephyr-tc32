@@ -1,0 +1,83 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <telink/tlsr8278.dtsi>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	model = "Telink TLSR8278 Generic (build-only)";
+	compatible = "telink,tlsr8278-generic";
+
+	aliases {
+		led0 = &led0;
+		watchdog0 = &wdt;
+	};
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash;
+		zephyr,code-partition = &app_partition;
+		zephyr,flash-controller = &flash_ctrl;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led0: led_0 {
+			gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&flash {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		app_partition: partition@0 {
+			label = "image-0";
+			reg = <0x00000000 0x0007c000>;
+		};
+
+		storage_partition: partition@f0000 {
+			label = "storage";
+			reg = <0x000f0000 0x00010000>;
+		};
+	};
+};
+
+&gpioa {
+	status = "okay";
+};
+
+zephyr_udc0: &usbd {
+	status = "okay";
+};
+
+&hwinfo {
+	status = "okay";
+};
+
+&wdt {
+	status = "okay";
+};
+
+&pinctrl {
+	status = "okay";
+};
+
+&clk {
+	status = "okay";
+};
+
+&adc {
+	status = "okay";
+};
+
+&flash_ctrl {
+	status = "okay";
+};

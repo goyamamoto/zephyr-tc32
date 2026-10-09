@@ -321,6 +321,14 @@ SPDX-FileComment = "Used by OpenOCD when programming and debugging the rv32m1_ve
 Zephyr-Description = "RV32M1 VEGA Board OpenOCD Configuration"
 
 [[annotations]]
+path = "arch/tc32/core/softfloat/**"
+SPDX-License-Identifier = "Apache-2.0 WITH LLVM-exception"
+SPDX-FileComment = "Compiled into every TC32 firmware image: the TC32 has no floating-point unit."
+Zephyr-Description = "TC32 Soft-Float Builtins"
+Zephyr-Origin = "https://github.com/llvm/llvm-project/tree/llvmorg-23.1.2/compiler-rt/lib/builtins"
+Zephyr-Kconfig-Condition = "CONFIG_TC32"
+
+[[annotations]]
 path = [
     "samples/tfm_integration/tfm_secure_partition/dummy_partition/tfm_dummy_partition.yaml.in",
     "samples/tfm_integration/tfm_secure_partition/dummy_partition/tfm_manifest_list.yaml.in",

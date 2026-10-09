@@ -356,6 +356,10 @@ static void run_crash_thread(k_thread_entry_t entry, bool abort)
  */
 ZTEST(fatal_exception, test_fatal_cpu_exception)
 {
+	if (IS_ENABLED(CONFIG_TEST_NO_CPU_EXCEPTION)) {
+		ztest_test_skip();
+	}
+
 	TC_PRINT("test generic CPU exception\n");
 	run_crash_thread(entry_cpu_exception, false);
 }
@@ -382,6 +386,10 @@ ZTEST(fatal_exception, test_fatal_cpu_exception)
  */
 ZTEST(fatal_exception, test_fatal_cpu_exception_extended)
 {
+	if (IS_ENABLED(CONFIG_TEST_NO_CPU_EXCEPTION)) {
+		ztest_test_skip();
+	}
+
 	TC_PRINT("test generic CPU exception (alternate trigger)\n");
 	run_crash_thread(entry_cpu_exception_extend, false);
 }

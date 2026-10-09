@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+common:
+  tags:
+    - tc32
+    - crypto
+  platform_allow:
+    - tlsr8278_generic
+  integration_platforms:
+    - tlsr8278_generic
+tests:
+  tc32_p256.pke:
+    extra_configs:
+      - CONFIG_TC32_P256_PKE=y
+  tc32_p256.soft:
+    extra_configs:
+      - CONFIG_TC32_P256_SOFT=y

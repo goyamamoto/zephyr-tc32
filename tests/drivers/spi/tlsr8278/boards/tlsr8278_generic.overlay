@@ -1,0 +1,55 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The SPI master on PA2 (DO), PA3 (DI) and PA4 (CK); a device with its
+ * chip select on PD5, active high, and one on the master's own chip
+ * select, PD2.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pinctrl/b87-pinctrl.h>
+
+&pinctrl {
+	spi0_do_pa2: spi0_do_pa2 {
+		pinmux = <TLSR8278_PA2_SPI_DO>;
+	};
+
+	spi0_di_pa3: spi0_di_pa3 {
+		pinmux = <TLSR8278_PA3_SPI_DI>;
+		input-enable;
+	};
+
+	spi0_ck_pa4: spi0_ck_pa4 {
+		pinmux = <TLSR8278_PA4_SPI_CK>;
+	};
+
+	spi0_cn_pd2: spi0_cn_pd2 {
+		pinmux = <TLSR8278_PD2_SPI_CN>;
+	};
+};
+
+&gpiod {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+	pinctrl-0 = <&spi0_do_pa2 &spi0_di_pa3 &spi0_ck_pa4 &spi0_cn_pd2>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>;
+
+	gpio_cs_dev: device@0 {
+		compatible = "vnd,spi-device";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+		spi-cs-high;
+	};
+
+	own_cs_dev: device@1 {
+		compatible = "vnd,spi-device";
+		reg = <1>;
+		spi-max-frequency = <1000000>;
+		spi-cpol;
+		spi-cpha;
+	};
+};

@@ -420,6 +420,15 @@ static void test_udc_ep_mps(uint8_t type)
 		}
 	}
 
+	if (type == USB_EP_TYPE_ISO && out_ep == 0 && in_ep == 0) {
+		/* The controller has no isochronous endpoint. */
+		err = udc_disable(dev);
+		zassert_ok(err, "Failed to disable UDC driver");
+		err = udc_shutdown(dev);
+		zassert_ok(err, "Failed to shoot-down UDC driver");
+		ztest_test_skip();
+	}
+
 	zassert_ok(err, "Failed to determine MPS");
 
 	for (int i = 0; i < ARRAY_SIZE(mps); i++) {
@@ -645,4 +654,19 @@ ZTEST(udc_driver_test, test_udc_ep_iso)
 	test_udc_ep_mps(USB_EP_TYPE_ISO);
 }
 
-ZTEST_SUITE(udc_driver_test, NULL, test_udc_device_get, NULL, NULL, NULL);
+static void *test_udc_setup(void)
+{
+	static const uint16_t mps0[] = {
+		[UDC_MPS0_8] = 8, [UDC_MPS0_16] = 16, [UDC_MPS0_32] = 32, [UDC_MPS0_64] = 64,
+	};
+	const struct device *dev = test_udc_device_get();
+	uint16_t mps = mps0[udc_caps(dev).mps0];
+
+	/* The control endpoint descriptors as the controller supports them. */
+	ed_ctrl_out.wMaxPacketSize = sys_cpu_to_le16(mps);
+	ed_ctrl_in.wMaxPacketSize = sys_cpu_to_le16(mps);
+
+	return (void *)dev;
+}
+
+ZTEST_SUITE(udc_driver_test, NULL, test_udc_setup, NULL, NULL, NULL);

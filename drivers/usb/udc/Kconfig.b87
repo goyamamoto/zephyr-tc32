@@ -1,0 +1,79 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config UDC_TELINK_B87
+	bool "Telink TLSR8278 USB device controller driver"
+	default y
+	depends on DT_HAS_TELINK_B87_USBD_ENABLED
+	help
+	  Driver for the full-speed USB device controller of the Telink
+	  TLSR8278, for the USB device stack (device_next). The controller
+	  answers SET_ADDRESS, SET/GET_INTERFACE, GET_STATUS, SET/CLEAR_FEATURE
+	  and SYNCH_FRAME itself; the driver tells the stack of the address
+	  state and of the host's remote wakeup setting. Alternate interface
+	  settings and the host's CLEAR_FEATURE(ENDPOINT_HALT) do not reach the
+	  stack, and there are no isochronous endpoints and no SOF events.
+
+if UDC_TELINK_B87
+
+config UDC_TELINK_B87_IRQ_LINES
+	bool "Take the TLSR8278 USB interrupt lines"
+	default y
+	help
+	  Enable the controller's five interrupt lines (EP0 setup, data and
+	  status, the data endpoints, bus reset) next to the driver's 1 ms
+	  poll. Without this option the driver polls only, and the lines
+	  stay masked.
+
+config UDC_TELINK_B87_EXTERNAL_POLL
+	bool
+	help
+	  Selected by a board driver that calls udc_b87_poll()
+	  (<zephyr/drivers/usb/udc_b87.h>) every millisecond from its
+	  own timer interrupt, so that the kernel's timeout processing does not
+	  run every millisecond in the system timer interrupt. The driver's
+	  poll timer then runs every UDC_TELINK_B87_FALLBACK_POLL_MS and polls
+	  only when the board has not polled since its last expiry: USB keeps
+	  working, slower, when the board's timer stops.
+
+config UDC_TELINK_B87_FALLBACK_POLL_MS
+	int "Period of the fallback poll with an external poll (ms)"
+	default 10
+	range 2 20
+	depends on UDC_TELINK_B87_EXTERNAL_POLL
+	help
+	  Each expiry runs the kernel's timeout processing in the system timer
+	  interrupt, which can hold the board's timer interrupt back. A longer
+	  period costs less and only slows USB when the board's timer has
+	  stopped. With the board's timer stopped the longest gap between polls
+	  is two periods, and USB 2.0 9.2.6.4 gives a request without data, and
+	  a status stage, 50 ms: hence at most 20.
+
+config UDC_TELINK_B87_SLOW_POLL
+	bool
+	depends on !UDC_TELINK_B87_EXTERNAL_POLL
+	help
+	  Selected by a board driver that calls udc_b87_slow_poll()
+	  (<zephyr/drivers/usb/udc_b87.h>) around a low-power state in
+	  which no host uses the bus: the poll timer then runs every
+	  UDC_TELINK_B87_SLOW_POLL_MS instead of every millisecond, so that the
+	  chip can suspend between its expiries.
+
+config UDC_TELINK_B87_SLOW_POLL_MS
+	int "Period of the slow poll (ms)"
+	default 10
+	range 2 20
+	depends on UDC_TELINK_B87_SLOW_POLL
+	help
+	  With the poll slowed, the longest gap between polls is one period;
+	  USB 2.0 9.2.6.4 gives a request without data, and a status stage,
+	  50 ms.
+
+config UDC_TELINK_B87_SIM
+	bool "Route TLSR8278 USB register accesses to a model"
+	depends on ARCH_POSIX
+	help
+	  For host tests on native_sim: the driver calls tlsr_usb_sim_rd8() and
+	  tlsr_usb_sim_wr8(), which the test provides, instead of accessing the
+	  registers.
+
+endif # UDC_TELINK_B87

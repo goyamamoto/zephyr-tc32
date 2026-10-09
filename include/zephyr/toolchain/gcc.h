@@ -565,7 +565,7 @@ do {                                                                    \
  * to generate named symbol/value pairs for kconfigs.
  */
 
-#if defined(CONFIG_ARM) || (defined(CONFIG_ARCH_POSIX) && defined(__arm__))
+#if defined(CONFIG_ARM) || defined(CONFIG_TC32) || (defined(CONFIG_ARCH_POSIX) && defined(__arm__))
 
 /*
  * GNU/ARM backend does not have a proper operand modifier which does not
@@ -606,18 +606,6 @@ do {                                                                    \
 #define GEN_ABSOLUTE_SYM(name, value)		\
 	__asm__ __volatile__(".globl\t" #name "\n\t.equ\t" #name \
 		",%0"                              \
-		"\n\t.type\t" #name ",%%object" :  : "n"(value))
-
-#define GEN_ABSOLUTE_SYM_KCONFIG(name, value)       \
-	__asm__ __volatile__(".globl\t" #name                    \
-		"\n\t.equ\t" #name "," #value       \
-		"\n\t.type\t" #name ",%object")
-
-#elif defined(CONFIG_TC32)
-
-#define GEN_ABSOLUTE_SYM(name, value)		\
-	__asm__ __volatile__(".globl\t" #name "\n\t.equ\t" #name \
-		",%c0"                              \
 		"\n\t.type\t" #name ",%%object" :  : "n"(value))
 
 #define GEN_ABSOLUTE_SYM_KCONFIG(name, value)       \

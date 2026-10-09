@@ -8,11 +8,11 @@
 #include <zephyr/linker/section_tags.h>
 #include <ksched.h>
 #include <kswap.h>
-#include <tlsr825x/irq.h>
+#include <tlsr827x/irq.h>
 
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
-#define TC32_IRQ_MAX_DRAIN (TLSR8258_NUM_IRQS * 2u)
+#define TC32_IRQ_MAX_DRAIN (TLSR827X_NUM_IRQS * 2u)
 
 /*
  * Debug state for hardware IRQ bring-up. Keep this in normal RAM so it can be
@@ -25,8 +25,8 @@ volatile uint32_t __noinit z_tc32_irq_debug_irq;
 volatile uint32_t __noinit z_tc32_irq_debug_drained;
 
 /*
- * Owner tracking for chip-level reg_irq_en (0x800643) — populated by the
- * inline arch_irq_lock()/arch_irq_unlock() in <zephyr/arch/tc32/irq.h>.
+ * Owner tracking for the chip-level interrupt enable (0x800643) — populated
+ * by the inline arch_irq_lock()/arch_irq_unlock() in <zephyr/arch/tc32/irq.h>.
  * Placed in .data (initialised to zero) so SWS can read consistently even
  * after a reset loop.
  */
@@ -72,19 +72,19 @@ static ALWAYS_INLINE void enter_irq(unsigned int irq)
 
 static ALWAYS_INLINE bool irq_is_valid(unsigned int irq)
 {
-	return tlsr8258_irq_is_valid(irq);
+	return tlsr827x_irq_is_valid(irq);
 }
 
 static ALWAYS_INLINE bool irq_clear_is_arch_owned(unsigned int irq)
 {
-	return (tlsr8258_irq_bit(irq) & TLSR8258_IRQ_TIMER_MASK) != 0u;
+	return (tlsr827x_irq_bit(irq) & TLSR827X_IRQ_TIMER_MASK) != 0u;
 }
 
 static ALWAYS_INLINE void irq_clear_arch_owned(unsigned int irq)
 {
-	/* Vendor order for TMR0..TMR2: clear IRQSRC first, then TMR_STATUS. */
-	tlsr8258_irq_clear_parent(irq);
-	*TLSR8258_REG_TMR_STA = BIT(irq);
+	/* TMR0..TMR2: clear IRQSRC first, then TMR_STATUS. */
+	tlsr827x_irq_clear_parent(irq);
+	*TLSR827X_REG_TMR_STA = BIT(irq);
 }
 
 static ALWAYS_INLINE unsigned int pending_lsb_index(uint32_t pending)
@@ -124,13 +124,13 @@ void *TC32_BOOT_RAM_MIRROR_CODE z_tc32_handle_irqs(void)
 	_kernel.cpus[0].nested++;
 	z_tc32_irq_count++;
 
-	while ((pending = (*TLSR8258_REG_IRQ_SRC & tlsr8258_irq_mask_read() &
-			  TLSR8258_IRQ_VALID_MASK)) != 0u) {
+	while ((pending = (*TLSR827X_REG_IRQ_SRC & tlsr827x_irq_mask_read() &
+			  TLSR827X_IRQ_VALID_MASK)) != 0u) {
 		unsigned int irq;
-		bool rf_pending = (pending & BIT(TLSR8258_IRQ_ZB_RT)) != 0u;
+		bool rf_pending = (pending & BIT(TLSR827X_IRQ_ZB_RT)) != 0u;
 
 		if (rf_pending) {
-			irq = TLSR8258_IRQ_ZB_RT;
+			irq = TLSR827X_IRQ_ZB_RT;
 		} else {
 			irq = pending_lsb_index(pending);
 		}
@@ -187,16 +187,3 @@ void *TC32_BOOT_RAM_MIRROR_CODE z_tc32_handle_irqs(void)
 
 	return next;
 }
-
-#ifdef CONFIG_DYNAMIC_INTERRUPTS
-int arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
-		     void (*routine)(const void *parameter),
-		     const void *parameter, uint32_t flags)
-{
-	ARG_UNUSED(priority);
-	ARG_UNUSED(flags);
-
-	z_isr_install(irq, routine, parameter);
-	return irq;
-}
-#endif /* CONFIG_DYNAMIC_INTERRUPTS */

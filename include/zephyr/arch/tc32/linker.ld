@@ -13,18 +13,14 @@
 
 #define ROM_BASE CONFIG_FLASH_BASE_ADDRESS
 
-#if CONFIG_FLASH_LOAD_SIZE > 0
-#define ROM_SIZE CONFIG_FLASH_LOAD_SIZE
-#else
 #define ROM_SIZE (CONFIG_FLASH_SIZE * 1024)
-#endif
 
 #define RAM_BASE DT_CHOSEN_SRAM_ADDR
 #define RAM_SIZE DT_CHOSEN_SRAM_SIZE
 #define TC32_BOOT_MIRROR_SIZE CONFIG_TC32_BOOT_MIRROR_SIZE
 /*
- * Vendor TLSR825x boot layouts reserve extra low SRAM immediately after the
- * boot-mirrored prefix for instruction-cache tag/data scratch:
+ * Extra low SRAM immediately after the boot-mirrored prefix is reserved for
+ * instruction-cache tag/data scratch:
  *   IC tag  = 0x100 bytes
  *   IC data = 0x800 bytes
  */
@@ -80,8 +76,8 @@ SECTIONS
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
 	/*
-	 * .ram_code — vendor-style low-flash region that the TC32 icache
-	 * (configured at reset.S "SET_IC") locks into its cache lines, giving
+	 * .ram_code — low-flash region that the TC32 icache (configured at
+	 * reset.S "SET_IC") locks into its cache lines, giving
 	 * deterministic single-cycle instruction fetch for hot paths such as
 	 * the 802.15.4 RF IRQ handler.  Symbols stay at FLASH addresses (no
 	 * LMA/VMA split, no software copy, no veneer thunks).  Anything
@@ -108,6 +104,12 @@ SECTIONS
 	SECTION_PROLOGUE(_TEXT_SECTION_NAME,,)
 	{
 		. = ALIGN(4);
+		/*
+		 * Input sections a board or application puts first
+		 * (zephyr_linker_sources(TEXT_SECTIONS ...)): code run often
+		 * enough that it should sit together in the instruction cache.
+		 */
+#include <snippets-text-sections.ld>
 		*(.text)
 		*(".text.*")
 	} GROUP_LINK_IN(ROMABLE_REGION)
@@ -115,12 +117,7 @@ SECTIONS
 	__text_region_end = .;
 	. = ALIGN(4);
 	_tc32_rom_data_lma_start = .;
-#if defined(CONFIG_XIP)
 	__rodata_region_start = .;
-#else
-	. = ORIGIN(RAM);
-	__rodata_region_start = .;
-#endif
 
 #include <zephyr/linker/common-rom.ld>
 #include <snippets-rom-sections.ld>
@@ -139,27 +136,16 @@ SECTIONS
 #include <zephyr/linker/kobject-rom.ld>
 		. = ALIGN(4);
 	}
-#if defined(CONFIG_XIP)
 	GROUP_LINK_IN(ROMABLE_REGION)
-#else
-	GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
-#endif
 
 #include <zephyr/linker/cplusplus-rom.ld>
 
-#if defined(CONFIG_XIP)
 	__rodata_region_end = .;
-#else
-	__rodata_region_start = ADDR(initlevel);
-	__rodata_region_end = .;
-#endif
 	__rodata_region_load_start = _tc32_rom_data_lma_start;
 	_tc32_rom_data_lma_end = LOADADDR(_RODATA_SECTION_NAME) + SIZEOF(_RODATA_SECTION_NAME);
 
 	_image_ram_start = ORIGIN(RAM);
-#if defined(CONFIG_XIP)
 	. = ORIGIN(RAM);
-#endif
 
 #include <snippets-ram-sections.ld>
 
@@ -227,13 +213,35 @@ SECTIONS
 		*(.TC32.attributes)
 	}
 
+	.ARM.attributes 0 :
+	{
+		KEEP(*(.ARM.attributes))
+	}
+
+#if defined(CONFIG_LLVM_USE_LLD)
+	.symtab 0 : { *(.symtab) }
+	.strtab 0 : { *(.strtab) }
+	.shstrtab 0 : { *(.shstrtab) }
+#endif
+
+	/*
+	 * Nothing unwinds on the TC32. The Thumb build's ARM unwind tables would
+	 * otherwise be placed as orphans, possibly between rodata and data in
+	 * flash, where __data_region_load_start above does not expect them.
+	 */
+	/DISCARD/ :
+	{
+		*(.ARM.exidx*)
+		*(.ARM.extab*)
+	}
+
 	PROVIDE(_stack_end_ = RAM_BASE + RAM_SIZE);
 	PROVIDE(_ram_end_ = .);
 	/*
 	 * Mirror only the early bootstrap prefix that must execute from the TLSR
 	 * low SRAM alias before reset.S switches to the canonical flash/XIP path.
 	 * Normal .text now runs directly from flash under XIP. The low SRAM
-	 * reserve must still leave room after that prefix for the TLSR825x
+	 * reserve must still leave room after that prefix for the TLSR827x
 	 * instruction-cache tag/data scratch window used by the flash execution
 	 * path.
 	 */
@@ -245,4 +253,17 @@ SECTIONS
 	PROVIDE(_ictag_end_ = _ictag_start_ + 0x100);
 	PROVIDE(_tc32_boot_mirror_runtime_min_ = _tc32_boot_copy_size_align_256_ + TC32_BOOT_ICACHE_SCRATCH_SIZE);
 	ASSERT(_tc32_boot_mirror_runtime_min_ <= TC32_BOOT_MIRROR_SIZE, "TC32 boot mirror reserve is too small for XIP bootstrap + icache scratch")
+	/*
+	 * The startup in soc/telink/tlsr/tlsr827x/setup/tlsr8278_startup.S
+	 * zeroes .bss and copies .data a word at a time up to the end symbol,
+	 * copies nothing else, fills the first 32 bytes of .data before the
+	 * copy overwrites them, and its loader fills the RAM code 16 bytes at
+	 * a time from 0xd0.
+	 */
+	ASSERT((__bss_start % 4) == 0 && (__bss_end % 4) == 0, "tlsr8278 startup: .bss is not word aligned")
+	ASSERT((__data_region_start % 4) == 0 && (__data_region_end % 4) == 0 && (__data_region_load_start % 4) == 0,
+	       "tlsr8278 startup: .data is not word aligned")
+	ASSERT(__ramfunc_end == __ramfunc_region_start, "tlsr8278 startup: .ramfunc is not empty and nothing copies it")
+	ASSERT(__data_region_end - __data_region_start >= 0x20, "tlsr8278 startup: .data is shorter than the 32 bytes the startup fills before the copy")
+	ASSERT(_tc32_boot_copy_size_align_256_ >= 0x1c4, "tlsr8278 startup: the RAM code ends inside the startup")
 }

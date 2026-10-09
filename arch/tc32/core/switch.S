@@ -8,12 +8,8 @@
 
 GTEXT(z_tc32_switch)
 GTEXT(z_tc32_thread_start)
-GTEXT(z_tc32_switch_to_main_static)
-GTEXT(z_tc32_switch_to_thread)
 GTEXT(z_tc32_switch_to_main)
-GTEXT(z_thread_entry)
 GTEXT(z_thread_abort)
-GTEXT(main)
 
 /* void z_tc32_switch(struct k_thread *new, struct k_thread *old) */
 SECTION_FUNC(TEXT, z_tc32_switch)
@@ -84,9 +80,9 @@ SECTION_FUNC(TEXT, z_tc32_thread_start)
 	tadd r5, r5, #__struct_arch_esf_SIZEOF
 	tmov r13, r5
 	/*
-	 * A thread is switched to with reg_irq_en cleared, and it enters here
-	 * instead of returning into do_swap(), so nothing else will restore
-	 * the gate for it. Publish the state arch_new_thread() recorded in the
+	 * A thread is switched to with the interrupt enable (0x643) cleared,
+	 * and it enters here instead of returning into do_swap(), so nothing
+	 * else will restore the gate for it. Publish the state arch_new_thread() recorded in the
 	 * synthetic frame, the way z_tc32_switch_to_main does for main.
 	 */
 	tloadr r5, .Lthread_start_irq_en
@@ -115,89 +111,6 @@ SECTION_FUNC(TEXT, z_tc32_thread_start)
 	.word _kernel
 .Lthread_start_irq_en:
 	.word 0x00800643
-
-SECTION_FUNC(TEXT, z_thread_entry)
-	tmov r4, r0
-	tmov r0, r1
-	tmov r1, r2
-	tmov r2, r3
-	tjl .Lz_thread_entry_call
-	nop
-	nop
-.Lz_thread_entry_finished:
-	tloadr r0, .Lz_thread_entry_kernel
-	nop
-	nop
-	tloadr r0, [r0, #(___kernel_t_cpus_OFFSET + ___cpu_t_current_OFFSET)]
-	tjl z_thread_abort
-	nop
-	nop
-.Lz_thread_entry_returned:
-	tj .Lz_thread_entry_returned
-.Lz_thread_entry_call:
-	tjex r4
-	nop
-	nop
-	.align 2
-.Lz_thread_entry_kernel:
-	.word _kernel
-
-/* void z_tc32_switch_to_main_static(void) */
-SECTION_FUNC(TEXT, z_tc32_switch_to_main_static)
-	tloadr r0, .Lmain_thread
-	tloadr r1, .Lkernel
-	nop
-	nop
-	tstorer r0, [r1, #(___kernel_t_cpus_OFFSET + ___cpu_t_current_OFFSET)]
-	tloadr r2, [r0, #_thread_offset_to_sp]
-	nop
-	nop
-	tmov r13, r2
-	tjl main
-.Lmain_returned:
-	tj .Lmain_returned
-
-	.align 2
-.Lmain_thread:
-	.word z_main_thread
-.Lkernel:
-	.word _kernel
-
-/* void z_tc32_switch_to_thread(struct k_thread *thread) */
-SECTION_FUNC(TEXT, z_tc32_switch_to_thread)
-	tloadr r2, [r0, #_thread_offset_to_sp]
-	nop
-	nop
-	tmov r13, r2
-	tloadr r2, [r0, #_thread_offset_to_lr]
-	nop
-	nop
-	tmov r14, r2
-	tloadr r4, [r0, #_thread_offset_to_r4]
-	tloadr r5, [r0, #_thread_offset_to_r5]
-	tloadr r6, [r0, #_thread_offset_to_r6]
-	tloadr r7, [r0, #_thread_offset_to_r7]
-	tloadr r2, [r0, #_thread_offset_to_r8]
-	nop
-	nop
-	tmov r8, r2
-	tloadr r2, [r0, #_thread_offset_to_r9]
-	nop
-	nop
-	tmov r9, r2
-	tloadr r2, [r0, #_thread_offset_to_r10]
-	nop
-	nop
-	tmov r10, r2
-	tloadr r2, [r0, #_thread_offset_to_r11]
-	nop
-	nop
-	tmov r11, r2
-	tloadr r2, [r0, #_thread_offset_to_r12]
-	nop
-	nop
-	tmov r12, r2
-	tjex lr
 
 /* void z_tc32_switch_to_main(char *stack_ptr, k_thread_entry_t entry) */
 SECTION_FUNC(TEXT, z_tc32_switch_to_main)

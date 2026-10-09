@@ -28,13 +28,14 @@ static ALWAYS_INLINE void arch_switch(void *switch_to, void **switched_from)
 	register struct k_thread *r0 __asm__("r0") = new_thread;
 	register struct k_thread *r1 __asm__("r1") = old_thread;
 
+	/* The call overwrites lr. */
 	__asm__ volatile (
-		"tjl z_tc32_switch\n\t"
+		"bl z_tc32_switch\n\t"
 		"nop\n\t"
 		"nop"
 		: "+r" (r0), "+r" (r1)
 		:
-		: "r2", "r3", "memory");
+		: "r2", "r3", "lr", "memory");
 }
 
 FUNC_NORETURN void z_tc32_fatal_error(unsigned int reason, const struct arch_esf *esf);

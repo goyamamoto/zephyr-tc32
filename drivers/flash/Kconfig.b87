@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_FLASH_TELINK_B87
+	bool "Telink TLSR8278 internal flash driver"
+	default y
+	depends on DT_HAS_TELINK_B87_FLASH_CONTROLLER_ENABLED
+	select FLASH_HAS_DRIVER_ENABLED
+	select FLASH_HAS_PAGE_LAYOUT
+	select FLASH_HAS_EXPLICIT_ERASE
+	select SOC_TLSR8278_MSPI
+	help
+	  The internal SPI flash the CPU executes from: read, page program and
+	  4 KB sector erase by the flash's commands, each transaction from
+	  SRAM with interrupts locked until the flash is idle again (a sector
+	  erase keeps them locked for its whole time). Data the caller keeps
+	  in the flash is copied to the stack 32 octets at a time.
+
+if SOC_FLASH_TELINK_B87
+
+config SOC_FLASH_TELINK_B87_BUSY_TIMEOUT_MS
+	int "Longest wait for a program or erase to finish (ms)"
+	default 1000
+	range 10 100000
+	help
+	  The status register is read until its write-in-progress bit clears,
+	  for at most this long; the operation then fails with -EIO.
+
+endif # SOC_FLASH_TELINK_B87

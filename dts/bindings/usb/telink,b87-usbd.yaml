@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Telink TLSR8278 full-speed USB device controller.
+  Endpoint 0 is an 8-byte control endpoint; endpoints 1, 2, 3, 4, 7 and 8 are
+  IN and 5 and 6 are OUT, with buffers in a shared 256-byte USB RAM.
+
+compatible: "telink,b87-usbd"
+
+include: [usb-ep.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  interrupt-names:
+    required: true
+    description: ep0-setup, ep0-data, ep0-status, ep-data, reset

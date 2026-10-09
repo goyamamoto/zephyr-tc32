@@ -8,8 +8,6 @@
 
 void z_thread_entry(k_thread_entry_t thread, void *arg1, void *arg2, void *arg3);
 void z_tc32_switch_to_main(char *stack_ptr, k_thread_entry_t entry);
-void z_tc32_switch_to_main_static(void);
-void z_tc32_switch_to_thread(struct k_thread *thread);
 
 void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 		     char *stack_ptr, k_thread_entry_t entry,

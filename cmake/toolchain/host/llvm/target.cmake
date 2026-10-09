@@ -46,7 +46,9 @@ elseif("${ARCH}" STREQUAL "hexagon")
 elseif("${ARCH}" STREQUAL "tricore")
   set(triple tricore-unknown-elf)
 elseif("${ARCH}" STREQUAL "tc32")
-  set(triple tc32-unknown-none-elf)
+  # A mainstream compiler builds ARMv4T Thumb; thumb2tc32.py turns the
+  # linked image into TC32 code (arch/tc32/CMakeLists.txt).
+  set(triple thumbv4t-none-eabi)
 endif()
 
 if(DEFINED triple)

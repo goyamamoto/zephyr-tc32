@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 pin controller (DS-TLSR8278 7.1): the pins' functions (Table 7-1,
+  two bits a pin from 0x5a8), their GPIO function bits, the SPI/I2C selects
+  of PA3, PA4, PB6 and PD7 (0x5b6, 0x5b7, Table 7-3), the input enables and
+  the pull resistors (analog 0x0e-0x15, Table 7-5).
+
+  Each child node is one pin, named in a device's pinctrl-N property:
+
+    #include <zephyr/dt-bindings/pinctrl/b87-pinctrl.h>
+
+    &pinctrl {
+            spi0_ck_pa4: spi0_ck_pa4 {
+                    pinmux = <TLSR8278_PA4_SPI_CK>;
+            };
+            spi0_di_pa3: spi0_di_pa3 {
+                    pinmux = <TLSR8278_PA3_SPI_DI>;
+                    input-enable;
+            };
+    };
+
+    &spi0 {
+            pinctrl-0 = <&spi0_ck_pa4 &spi0_di_pa3>;
+            pinctrl-names = "default";
+    };
+
+  bias-pull-up is the 10 kOhm pull-up, bias-pull-down the 100 kOhm
+  pull-down; with neither the pin has no pull resistor. Without
+  input-enable the pin's input is disabled.
+
+compatible: "telink,b87-pinctrl"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: The function and SPI/I2C select registers (0x5a8-0x5b7).
+
+child-binding:
+  description: One pin's function and properties.
+
+  include:
+    - name: pincfg-node.yaml
+      property-allowlist:
+        - bias-disable
+        - bias-pull-down
+        - bias-pull-up
+        - input-enable
+
+  properties:
+    pinmux:
+      required: true
+      type: int
+      description: TLSR8278_PINMUX() value, <zephyr/dt-bindings/pinctrl/b87-pinctrl.h>.

@@ -1,0 +1,34 @@
+/*
+ * native_sim: the Telink TLSR8278 USB device controller as zephyr_udc0, its
+ * registers routed to the test's model (CONFIG_UDC_TELINK_B87_SIM), and a
+ * stand-in for the Telink interrupt controller that numbers its lines.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/delete-node/ &zephyr_udc0;
+
+/ {
+	tlsr_periph {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		tlsr_intc: interrupt-controller@800640 {
+			compatible = "telink,b87-intc";
+			reg = <0x00800640 0x0000000c>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+		};
+
+		zephyr_udc0: usbd@800100 {
+			compatible = "telink,b87-usbd";
+			reg = <0x00800100 0x00000040>;
+			interrupt-parent = <&tlsr_intc>;
+			interrupts = <8>, <9>, <10>, <12>, <17>;
+			interrupt-names = "ep0-setup", "ep0-data", "ep0-status", "ep-data", "reset";
+			num-bidir-endpoints = <1>;
+			num-in-endpoints = <6>;
+			num-out-endpoints = <2>;
+		};
+	};
+};

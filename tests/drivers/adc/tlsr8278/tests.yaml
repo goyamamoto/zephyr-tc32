@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+tests:
+  drivers.adc.tlsr8278:
+    tags:
+      - drivers
+      - adc
+    platform_allow:
+      - tlsr8278_generic
+    integration_platforms:
+      - tlsr8278_generic

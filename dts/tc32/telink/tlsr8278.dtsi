@@ -1,0 +1,235 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * TLSR8278 (Telink B87 family): the TC32 core, the 64 KB SRAM at 0x840000,
+ * the interrupt controller, the system timer, the GPIO ports, the 1 MB of
+ * internal flash the datasheet gives (DS-TLSR8278-E, Ver 1.0.4) under its
+ * controller, the USB device controller, the radio, and the peripherals of
+ * the hwinfo, watchdog, clock, pin, ADC and SPI drivers. Keyboard firmware
+ * built on this tree runs on TLSR8278 hardware with these nodes and their
+ * drivers.
+ */
+
+#include <zephyr/dt-bindings/clock/b87-clock.h>
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			compatible = "telink,tc32";
+			reg = <0>;
+			clock-frequency = <24000000>;
+		};
+	};
+
+	soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "telink,telink_b87-soc";
+		ranges;
+
+		intc: interrupt-controller@800640 {
+			compatible = "telink,b87-intc";
+			reg = <0x00800640 0x0000000c>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+		};
+
+		stimer: stimer@800740 {
+			compatible = "telink,b87-stimer";
+			reg = <0x00800740 0x00000010>;
+			interrupts = <20>;
+			interrupt-parent = <&intc>;
+		};
+
+		gpioa: gpio@800580 {
+			compatible = "telink,b87-gpio";
+			reg = <0x00800580 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpiob: gpio@800588 {
+			compatible = "telink,b87-gpio";
+			reg = <0x00800588 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpioc: gpio@800590 {
+			compatible = "telink,b87-gpio";
+			reg = <0x00800590 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpiod: gpio@800598 {
+			compatible = "telink,b87-gpio";
+			reg = <0x00800598 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		gpioe: gpio@8005a0 {
+			compatible = "telink,b87-gpio";
+			reg = <0x008005a0 0x00000008>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupts = <18>;
+			interrupt-parent = <&intc>;
+			status = "disabled";
+		};
+
+		sram0: memory@840000 {
+			compatible = "mmio-sram";
+			reg = <0x00840000 0x00010000>;
+		};
+
+		/* USB device controller: control endpoint at 0x800100, data
+		 * endpoint registers up to 0x80013f. Interrupt numbers are bits
+		 * of the interrupt source flags 0x648-0x64a (DS-TLSR8278 6.2):
+		 * irq_udc[0-2] 8/9/10 (EP0 setup/data/status), irq_udc[4] 12
+		 * (endpoint data), usb_reset 17.
+		 */
+		usbd: usbd@800100 {
+			compatible = "telink,b87-usbd";
+			reg = <0x00800100 0x00000040>;
+			interrupts = <8>, <9>, <10>, <12>, <17>;
+			interrupt-names = "ep0-setup", "ep0-data", "ep0-status", "ep-data", "reset";
+			interrupt-parent = <&intc>;
+			num-bidir-endpoints = <1>;
+			num-in-endpoints = <6>;
+			num-out-endpoints = <2>;
+			status = "disabled";
+		};
+
+		/* The radio (BLE 1M and a private 2M mode). Its registers are
+		 * not in DS-TLSR8278: 0x400-0x4ff, the RF DMA's 0xc08-0xc2f,
+		 * 0xf00-0xf2f and 0x1220-0x134f. irq_zb_rt is interrupt 13
+		 * (DS-TLSR8278 6.2).
+		 */
+		radio: radio@800400 {
+			compatible = "telink,b87-radio";
+			reg = <0x00800400 0x00000100>, <0x00800c08 0x00000028>,
+			      <0x00800f00 0x00000030>, <0x00801220 0x00000130>;
+			interrupts = <13>;
+			interrupt-parent = <&intc>;
+		};
+
+		/* Hardware information: the reset status register (bit 0: a
+		 * watchdog reset, DS-TLSR8278 5.1.1), the wakeup status of
+		 * analog 0x44 and the flash's unique ID (2.1.3).
+		 */
+		hwinfo: hwinfo@800072 {
+			compatible = "telink,b87-hwinfo";
+			reg = <0x00800072 0x00000001>;
+			status = "disabled";
+		};
+
+		/* Module clocks: the clock enables 0x63-0x65 and the system
+		 * clock select 0x66 (DS-TLSR8278 4.3, Table 4-1).
+		 */
+		clk: clock-controller@800063 {
+			compatible = "telink,b87-clock";
+			reg = <0x00800063 0x00000004>;
+			#clock-cells = <1>;
+			status = "disabled";
+		};
+
+		/* Pin controller: the pins' functions (0x5a8-0x5af) and the
+		 * SPI/I2C selects (0x5b6, 0x5b7), DS-TLSR8278 7.1.1; the
+		 * driver also sets the ports' GPIO function and input enable
+		 * bits and the analog pull resistors.
+		 */
+		pinctrl: pin-controller@8005a8 {
+			compatible = "telink,b87-pinctrl";
+			reg = <0x008005a8 0x00000010>;
+			status = "disabled";
+		};
+
+		/* Timer2 as watchdog (DS-TLSR8278 5.1.6): the timers' control
+		 * word and status (0x620-0x623) and Timer2's count (0x638).
+		 */
+		wdt: watchdog@800620 {
+			compatible = "telink,b87-watchdog";
+			reg = <0x00800620 0x00000020>;
+			status = "disabled";
+		};
+
+		/* SAR ADC (DS-TLSR8278 12): its analog registers 0xea-0xfc,
+		 * and the DMA that writes its codes to SRAM, DFIFO2 at
+		 * 0xb08-0xb1f.
+		 */
+		adc: adc@800b08 {
+			compatible = "telink,b87-adc";
+			reg = <0x00800b08 0x00000018>;
+			#io-channel-cells = <1>;
+			status = "disabled";
+		};
+
+		/* SPI master (DS-TLSR8278 7.4): 0x08-0x0b; its pins from the
+		 * pin controller.
+		 */
+		spi0: spi@800008 {
+			compatible = "telink,b87-spi";
+			reg = <0x00800008 0x00000004>;
+			clocks = <&clk TLSR8278_CLK_SPI>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		/* The SPI to the internal flash, data 0x80000c and control
+		 * 0x80000d (not in DS-TLSR8278), and the flash itself.
+		 */
+		flash_ctrl: flash-controller@80000c {
+			compatible = "telink,b87-flash-controller";
+			reg = <0x0080000c 0x00000002>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			status = "disabled";
+
+			flash: flash@0 {
+				compatible = "soc-nv-flash";
+				reg = <0x00000000 0x00100000>;
+				write-block-size = <1>;
+			};
+		};
+
+		/* Random bit generator (DS-TLSR8278 17): an entropy source of
+		 * tc32_rng only, polled.
+		 */
+		rbg: rbg@804400 {
+			compatible = "telink,b87-rbg";
+			reg = <0x00804400 0x00000088>;
+			status = "disabled";
+		};
+
+		/* Public key engine (DS-TLSR8278 16): the registers, operand RAM A
+		 * and operand RAM B (the ten 256-bit slots of each; the RAM goes on
+		 * beyond them). Polled; irq_pke is interrupt 15 (6.2). */
+		pke: pke@802000 {
+			compatible = "telink,b87-pke";
+			reg = <0x00802000 0x00000084>, <0x00802400 0x00000168>,
+			      <0x00803000 0x00000168>;
+			status = "disabled";
+		};
+	};
+};

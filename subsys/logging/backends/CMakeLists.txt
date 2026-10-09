@@ -66,6 +66,11 @@ zephyr_sources_ifdef(
 )
 
 zephyr_sources_ifdef(
+  CONFIG_LOG_BACKEND_TC32EMU
+  log_backend_tc32emu.c
+)
+
+zephyr_sources_ifdef(
   CONFIG_LOG_BACKEND_UART
   log_backend_uart.c
 )

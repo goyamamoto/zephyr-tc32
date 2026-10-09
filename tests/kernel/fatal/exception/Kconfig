@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Fatal exception test"
+
+source "Kconfig.zephyr"
+
+config TEST_NO_CPU_EXCEPTION
+	bool "No CPU exception to trigger"
+	help
+	  Skip test_fatal_cpu_exception and test_fatal_cpu_exception_extended,
+	  for an architecture where executing an invalid instruction or
+	  fetching from an invalid address raises no exception that the
+	  kernel's fatal error path could report.

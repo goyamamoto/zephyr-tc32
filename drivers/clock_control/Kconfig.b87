@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config CLOCK_CONTROL_TELINK_B87
+	bool "Telink TLSR8278 module clock driver"
+	default y
+	depends on DT_HAS_TELINK_B87_CLOCK_ENABLED
+	help
+	  Turns the module clocks of the clock enable registers 0x63-0x65 on
+	  and off (DS-TLSR8278 4.3) and gives their rate, the system clock as
+	  the clock select registers 0x66 and 0x70 set it (4.2). The SoC
+	  setup turns every module clock but the TRNG's on at boot.

@@ -262,6 +262,9 @@ TESTDATA_1_2 = [
      False, False, TwisterStatus.PASS, None, False, False),
     (1, True, 'ERROR: region `FLASH\' overflowed by 123 MB',
      True,  True, TwisterStatus.SKIP, 'FLASH overflow', True, False),
+    (1, True, 'ld.lld: error: section \'noinit\' will not fit in region \'RAM\':'
+     ' overflowed by 7496 bytes',
+     True,  True, TwisterStatus.SKIP, 'RAM overflow', True, False),
     (1, True, 'Error: Image size (99 B) + trailer (1 B) exceeds requested size',
      True, True, TwisterStatus.SKIP, 'imgtool overflow', True, False),
     (1, True, 'mock.ANY',
@@ -274,7 +277,8 @@ TESTDATA_1_2 = [
     ' expected_change_skip, expected_add_missing',
     TESTDATA_1_2,
     ids=['no error, no instance run', 'no error, instance run',
-         'error - region overflow', 'error - image size exceed', 'error']
+         'error - region overflow', 'error - region overflow, lld',
+         'error - image size exceed', 'error']
 )
 @pytest.mark.parametrize('sys_platform', TESTDATA_1_1)
 def test_cmake_run_build(

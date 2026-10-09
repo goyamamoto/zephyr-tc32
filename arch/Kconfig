@@ -104,6 +104,7 @@ config TC32
 	select ATOMIC_OPERATIONS_C
 	select ARCH_SUPPORTS_EMPTY_IRQ_SPURIOUS
 	select ARCH_HAS_CUSTOM_SWAP_TO_MAIN
+	select ARCH_HAS_TMCVT_DIV
 	select USE_SWITCH
 	select USE_SWITCH_SUPPORTED
 	help
@@ -880,6 +881,15 @@ config ARCH_HAS_BIT_REV
 	  sys_bit_rev*() helpers when the toolchain does not offer a
 	  __builtin_bitreverse*() equivalent.
 
+config ARCH_HAS_TMCVT_DIV
+	bool
+	help
+	  This hidden option is selected by the target architecture if
+	  the architecture provides arch_tmcvt_div64(), arch_tmcvt_mod64()
+	  and arch_tmcvt_div32() through <zephyr/arch/tmcvt.h>, which the
+	  time unit conversions of <zephyr/sys/time_units.h> use for their
+	  divisions instead of the / and % operators.
+
 config ARCH_HAS_SINGLE_THREAD_SUPPORT
 	bool
 
@@ -1518,7 +1528,10 @@ config ARCH
 
 config TOOLCHAIN_HAS_BUILTIN_FFS
 	bool
-	default y if !(64BIT && RISCV)
+	# TC32: find_lsb_set() takes its C version instead of clang's
+	# __builtin_ffs() for ARMv4T Thumb, a table lookup addressed with adr
+	# (add rd, pc, #imm).
+	default y if !(64BIT && RISCV) && !TC32
 	help
 	  Hidden option to signal that toolchain has __builtin_ffs*().
 

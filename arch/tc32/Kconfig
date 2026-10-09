@@ -16,9 +16,6 @@ config GEN_IRQ_VECTOR_TABLE
 config GEN_SW_ISR_TABLE
 	default y
 
-config ARCH_HAS_SINGLE_THREAD_SUPPORT
-	default y if !SMP
-
 config TC32_BOOT_MIRROR_SIZE
 	hex "TC32 boot mirror SRAM reserve size"
 	default 0x4000
@@ -26,7 +23,79 @@ config TC32_BOOT_MIRROR_SIZE
 	  Size of the low SRAM window reserved for the TLSR boot-ROM flash
 	  mirror. Under the current XIP startup flow this window must cover the
 	  small reset/IRQ bootstrap prefix and the adjacent low-SRAM instruction
-	  cache tag/data scratch area used by the TLSR825x flash execution path
+	  cache tag/data scratch area used by the TLSR827x flash execution path
 	  before normal RAM placement begins.
+
+config TC32_FAST_DIV64
+	bool "64-bit division by 32-bit digits"
+	default y
+	help
+	  The 64-bit divisions of the runtime (__aeabi_uldivmod,
+	  __aeabi_ldivmod, __divdi3 and the others in
+	  arch/tc32/core/compiler_builtins.c) divide by 32-bit steps: one
+	  32-bit division when both operands fit in 32 bits, two or four
+	  more for a 32-bit divisor (on the TLSR8278 its hardware divider),
+	  and shift-and-subtract over the quotient's bits only for a larger
+	  divisor; a call takes tens to a few hundred instructions. Without
+	  it they divide bit by bit over all 64 bits of the dividend, a few
+	  thousand instructions a call, with less code.
+	  The bit-serial division is built either way as
+	  __tc32_uldivmod_proven, for code that calls it by name; without
+	  this option __aeabi_uldivmod is that function under another name.
+
+config TC32_POP_PC_RETURNS
+	bool "Thumb returns with pop {..., pc}"
+	help
+	  Every C compile gets the Thumb-only target feature noarm
+	  (-Xclang -target-feature -Xclang +noarm): the code never returns
+	  to ARM state, so a function that saved lr returns with
+	  pop {..., pc} instead of pop {...}; pop {rN}; bx rN, a few bytes
+	  less per function. A compile unit named with tc32_classic_returns()
+	  (arch/tc32/CMakeLists.txt) keeps the bx returns. The configuration
+	  stops when a test function compiled with the feature does not return
+	  with pop {..., pc} (a clang without the feature ignores it without a
+	  message), or compiled with +noarm then -noarm does not return
+	  through bx. On the direct path (TC32_DIRECT, -mcpu=tc32) the core
+	  has the feature itself; without this option every C compile there
+	  gets -noarm, so that both paths give the same code.
+
+choice TC32_ICF
+	prompt "Identical code folding in the link"
+	default TC32_ICF_NONE
+	depends on LLVM_USE_LLD
+	help
+	  ld.lld's --icf keeps one copy of input sections with the same
+	  contents, relocations and flags, and points every reference to the
+	  others at it. It folds only sections that the linker script puts in
+	  the same output section, so code in .ram_code, .boot_ram_mirror or
+	  .tc32_flash_copy never merges with code in flash. Folded symbols share
+	  an address, so a symbolizer or an emulator breakpoint on one of them
+	  names or stops at both.
+
+config TC32_ICF_NONE
+	bool "None"
+
+config TC32_ICF_SAFE
+	bool "Safe: sections whose address nothing uses"
+	help
+	  ld.lld --icf=safe folds code and read-only data only when no object
+	  marks a symbol of the section address-significant: clang lists every
+	  symbol whose address the code uses other than in a direct call in the
+	  object's .llvm_addrsig table, and from an object without that
+	  table, the translated assembly sources for example, every symbol it
+	  defines or references counts as address-significant.
+	  Two functions that code compares through pointers keep different
+	  addresses.
+
+config TC32_ICF_ALL
+	bool "All: code even when its address is used"
+	help
+	  ld.lld --icf=all folds identical code sections whether or not their
+	  address is used: two different functions can then have the same
+	  address, so code that tells handlers, callbacks or API functions
+	  apart by comparing pointers can take one for the other. Read-only
+	  data keeps the safe rule.
+
+endchoice
 
 endmenu

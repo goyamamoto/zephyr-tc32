@@ -1,5 +1,9 @@
 common:
   ignore_faults: true
+  extra_configs:
+    # The TC32's behaviour on an invalid instruction or an invalid fetch is
+    # not documented, and it reports no CPU fault exception.
+    - arch:tc32:CONFIG_TEST_NO_CPU_EXCEPTION=y
 tests:
   kernel.common.stack_protection:
     extra_args: CONF_FILE=prj.conf

@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config LOG_BACKEND_TC32EMU
+	bool "TC32 emulator backend (emulator images only)"
+	depends on TC32
+	select LOG_BACKEND_SUPPORTS_FORMAT_TIMESTAMP
+	default y if TC32EMU_CONSOLE
+	help
+	  Log messages as bytes written one at a time to address 0x80fff0,
+	  where TC32-devtools' emulator (run-boot --console) reads them. The
+	  address is not a register of the chip: enable this only for images
+	  that run in the emulator, such as test builds. printk and stdout go
+	  there through the console driver TC32EMU_CONSOLE.
+
+if LOG_BACKEND_TC32EMU
+
+backend = TC32EMU
+backend-str = tc32emu
+source "subsys/logging/Kconfig.template.log_format_config"
+
+endif # LOG_BACKEND_TC32EMU

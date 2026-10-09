@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+
+common:
+  tags:
+    - tc32
+    - random
+  platform_allow:
+    - tlsr8278_generic
+  integration_platforms:
+    - tlsr8278_generic
+tests:
+  random.tc32_rng: {}
+  random.tc32_rng.trng_credit:
+    extra_configs:
+      - CONFIG_TC32_RNG_TRNG_CREDIT=y
+      - CONFIG_TC32_RNG_TRNG_BYTES=64
+  random.tc32_rng.aes_software:
+    extra_configs:
+      - CONFIG_TC32_AES128_SOFTWARE=y
+  random.tc32_rng.collect_limit:
+    extra_configs:
+      - CONFIG_TC32_RNG_JITTER_SAMPLES_PER_BIT=1024
+  random.tc32_rng.no_adc:
+    extra_configs:
+      - CONFIG_TC32_RNG_ADC=n
+      - CONFIG_TC32_RNG_ADC_DUMP=n

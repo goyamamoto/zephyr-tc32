@@ -9,3 +9,4 @@ project(test_udc_driver)
 target_sources(app PRIVATE
     src/main.c
 )
+target_sources_ifdef(CONFIG_UDC_TELINK_B87_SIM app PRIVATE src/udc_b87_sim.c)

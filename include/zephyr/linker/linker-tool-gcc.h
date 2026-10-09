@@ -66,7 +66,8 @@
 #elif defined(CONFIG_TRICORE)
 	OUTPUT_FORMAT("elf32-tricore")
 #elif defined(CONFIG_TC32)
-	OUTPUT_FORMAT("elf32-littletc32")
+	/* Built as ARMv4T Thumb and re-encoded after the link */
+	OUTPUT_FORMAT("elf32-littlearm")
 #else
 	#error Arch not supported.
 #endif
@@ -122,8 +123,6 @@
 #if defined(CONFIG_ARCH_POSIX)
 #define GROUP_ROM_LINK_IN(vregion, lregion)
 #elif defined(K_MEM_IS_VM_KERNEL)
-#define GROUP_ROM_LINK_IN(vregion, lregion) > vregion AT > lregion
-#elif defined(CONFIG_TC32) && !defined(CONFIG_XIP)
 #define GROUP_ROM_LINK_IN(vregion, lregion) > vregion AT > lregion
 #else
 #define GROUP_ROM_LINK_IN(vregion, lregion) > lregion

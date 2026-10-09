@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_TLSR827X
+	bool
+	select SOC_FAMILY_TELINK_TLSR
+	help
+	  Telink TLSR827x (B87 family)
+
+config SOC_TLSR8278
+	bool
+	select SOC_SERIES_TLSR827X
+	help
+	  Telink TLSR8278: the TC32 core, 64 KB of SRAM and 1 MB of
+	  internal flash (see soc.c and telink_b87_timer.c).
+
+config SOC_SERIES
+	default "tlsr827x" if SOC_SERIES_TLSR827X
+
+config SOC
+	default "tlsr8278" if SOC_TLSR8278

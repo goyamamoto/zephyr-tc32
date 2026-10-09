@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 internal flash controller: the SPI to the flash the CPU executes
+  from, digital registers 0x80000c (data) and 0x80000d (control), which
+  DS-TLSR8278 does not document. Its child is the flash itself
+  (soc-nv-flash), with write-block-size 1; the driver erases 4 KB sectors.
+
+compatible: "telink,b87-flash-controller"
+
+include: flash-controller.yaml
+
+properties:
+  reg:
+    required: true

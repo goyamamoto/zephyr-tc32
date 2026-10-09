@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+common:
+  tags:
+    - tc32
+  platform_allow:
+    - tlsr8278_generic
+  integration_platforms:
+    - tlsr8278_generic
+tests:
+  arch.tc32.softfloat: {}

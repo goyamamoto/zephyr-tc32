@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config GPIO_TELINK_B87
+	bool "Telink B87 GPIO driver"
+	default y
+	depends on DT_HAS_TELINK_B87_GPIO_ENABLED
+	help
+	  Enable the GPIO driver for Telink B87 (TLSR8278) GPIO ports.

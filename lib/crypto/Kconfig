@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig TC32_P256
+	bool "P-256 for Bluetooth LE Secure Connections (tc32_p256.h)"
+	help
+	  tc32_p256.h: a public key from a private key, an ECDH shared secret
+	  and the check that a point is on the curve, in the octet order the
+	  SMP PDUs use. An operation is started and its result taken by a later
+	  call. The implementation is chosen below.
+
+if TC32_P256
+
+choice TC32_P256_IMPL
+	prompt "Implementation"
+	default TC32_P256_SOFT
+
+config TC32_P256_SOFT
+	bool "p256-m (software)"
+	help
+	  lib/crypto/p256-m: constant-time P-256 in C (TF-PSA-Crypto's
+	  p256-m), with tc32_p256_soft.c on top. An operation runs to the end
+	  inside the start call; the first poll gives the result.
+
+config TC32_P256_PKE
+	bool "The TLSR8278's public key engine"
+	depends on SOC_TLSR8278 && DT_HAS_TELINK_B87_PKE_ENABLED
+	select SOC_TLSR8278_PKE
+	help
+	  soc/telink/tlsr/tlsr827x/tlsr_pke.c: the chip's engine runs the
+	  operation while the caller polls.
+
+endchoice
+
+endif # TC32_P256

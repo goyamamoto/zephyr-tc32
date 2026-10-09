@@ -355,12 +355,14 @@ class CMake:
                     log.write(log_msg)
 
             if log_msg:
-                pattern = (
-                    r"region `(FLASH|ROM|RAM|ICCM|DCCM|SRAM|"
-                    r"dram\d_\d_seg|iram\d_\d_seg)' "
-                    "overflowed by"
+                regions = r"(FLASH|ROM|RAM|ICCM|DCCM|SRAM|dram\d_\d_seg|iram\d_\d_seg)"
+                # GNU ld: "region `RAM' overflowed by N bytes"; LLVM lld:
+                # "section 'x' will not fit in region 'RAM': overflowed by N bytes"
+                overflow_found = re.findall(
+                    r"region `" + regions + r"' overflowed by", log_msg
+                ) + re.findall(
+                    r"will not fit in region '" + regions + r"': overflowed by", log_msg
                 )
-                overflow_found = re.findall(pattern, log_msg)
 
                 imgtool_overflow_found = re.findall(
                     r"Error: Image size \(.*\) \+ trailer \(.*\) exceeds requested size",

@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 module clocks (DS-TLSR8278 4.3): the clock enable registers
+  0x63-0x65 and the system clock select 0x66. A device names its module
+  clock with one cell, a TLSR8278_CLK_* number
+  (<zephyr/dt-bindings/clock/b87-clock.h>), whose rate is the system
+  clock's.
+
+compatible: "telink,b87-clock"
+
+include: [clock-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  "#clock-cells":
+    const: 1
+
+clock-cells:
+  - id

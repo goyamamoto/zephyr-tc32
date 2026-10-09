@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Telink TLSR8278 radio: BLE 1M and a private 2M mode, with the RF DMA
+  channels 2 (RX) and 3 (TX). The registers are not documented in
+  DS-TLSR8278; soc/telink/tlsr/tlsr827x/tlsr_radio.c drives them
+  (CONFIG_SOC_TLSR8278_RADIO).
+
+compatible: "telink,b87-radio"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true

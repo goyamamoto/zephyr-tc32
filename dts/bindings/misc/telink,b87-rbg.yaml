@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 random bit generator (DS-TLSR8278 17), the register block. The
+  datasheet's Table 17-1 numbers the registers 0x4000-0x4087; the block
+  answers at 0x804400-0x804487. Only the tc32_rng generator (TC32_RNG) reads
+  it, as one of its entropy sources; it is not an entropy device, so its raw
+  output is never handed out as random numbers.
+
+compatible: "telink,b87-rbg"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true

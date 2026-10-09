@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config ADC_TELINK_B87
+	bool "Telink TLSR8278 SAR ADC driver"
+	default y
+	depends on DT_HAS_TELINK_B87_ADC_ENABLED
+	select ADC_CONFIGURABLE_INPUTS
+	help
+	  The SAR ADC's misc channel (DS-TLSR8278 12): inputs PB0-PB7, PC4 and
+	  PC5 (input-positive 1-10), single-ended against ground or
+	  differential, the 1.2 V reference, gain 1 (the chip's other input
+	  scale, 1/8, has no gain value in the ADC API), sampling time 3
+	  to 48 ADC clock cycles in steps of 3, resolution 14 (two's
+	  complement) or 13 (single-ended, below ground read as 0). Each
+	  conversion powers the ADC up and takes its code from the DMA
+	  (DFIFO2); the ADC is powered down between conversions. tc32_rng's
+	  ADC source takes this driver's lock, so the two never interleave.

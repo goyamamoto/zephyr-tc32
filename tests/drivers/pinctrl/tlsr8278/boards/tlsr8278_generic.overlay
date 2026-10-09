@@ -1,0 +1,54 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/pinctrl/b87-pinctrl.h>
+
+&pinctrl {
+	test_do_pa2: test_do_pa2 {
+		pinmux = <TLSR8278_PA2_SPI_DO>;
+	};
+
+	test_di_pa3: test_di_pa3 {
+		pinmux = <TLSR8278_PA3_SPI_DI>;
+		input-enable;
+		bias-pull-up;
+	};
+
+	test_ck_pa4: test_ck_pa4 {
+		pinmux = <TLSR8278_PA4_SPI_CK>;
+	};
+
+	test_sda_pb6: test_sda_pb6 {
+		pinmux = <TLSR8278_PINMUX(TLSR8278_PORT_B, 6, TLSR8278_FUNC_1, TLSR8278_BUS_I2C)>;
+		input-enable;
+	};
+
+	test_pc5: test_pc5 {
+		pinmux = <TLSR8278_PINMUX(TLSR8278_PORT_C, 5, TLSR8278_FUNC_2, TLSR8278_BUS_NONE)>;
+		input-enable;
+		bias-pull-down;
+	};
+
+	test_gpio_pa2: test_gpio_pa2 {
+		pinmux = <TLSR8278_GPIO(TLSR8278_PORT_A, 2)>;
+	};
+
+	test_gpio_pa3: test_gpio_pa3 {
+		pinmux = <TLSR8278_GPIO(TLSR8278_PORT_A, 3)>;
+		bias-pull-up;
+	};
+
+	test_gpio_pa4: test_gpio_pa4 {
+		pinmux = <TLSR8278_GPIO(TLSR8278_PORT_A, 4)>;
+	};
+};
+
+/ {
+	test_device: test-device {
+		compatible = "vnd,pinctrl-device";
+		pinctrl-0 = <&test_do_pa2 &test_di_pa3 &test_ck_pa4 &test_sda_pb6 &test_pc5>;
+		pinctrl-1 = <&test_gpio_pa2 &test_gpio_pa3 &test_gpio_pa4>;
+		pinctrl-names = "default", "sleep";
+	};
+};

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TLSR8278 hardware information: the reset status register 0x72, whose bit 0
+  the watchdog sets (DS-TLSR8278 5.1.1, write one to clear), the wakeup
+  status of analog register 0x44 (Table 2-6), and the 128-bit unique ID the
+  internal flash is preloaded with (2.1.3), read with the flash's command
+  0x4b.
+
+compatible: "telink,b87-hwinfo"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: The reset status register.

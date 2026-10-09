@@ -1,0 +1,207 @@
+{
+ "code": [
+  [
+   32,
+   120
+  ],
+  [
+   208,
+   358
+  ],
+  [
+   362,
+   364
+  ]
+ ],
+ "code_hex": "00a26ea301b29a02fccd18081809015009fe014141411308130902ec0a4040a28a408a48d2f7d2ff01aafac04a4801a3130001ab3cc108080809090a01a424f6910235ca25ec6de8055003581be600abfbc110b1f487c04614a211485aa088020bc115a21148a5a0880206c116a211483408014017a211484140330800a14140aba1014000a206a301b29a02fccd01a1414025082509260a910202ca085004b1fa871408c06b150885061308c06b1408850600a01309140a910202ca085004b1fa871309130a910202ca085004b1fa870e091108084001b048401009100a110b9a0204ca0858105004b104b2f887fe87",
+ "code_sha256": "8a87561a76209959e0741edd73479e423ee8b000d45ce81f28d438d6d2425877",
+ "header_copy_word": 8912909,
+ "entry": 152,
+ "stub_end": 208,
+ "start": 32,
+ "call": 358,
+ "call_symbol": "z_cstart",
+ "end": 452,
+ "pool": [
+  {
+   "offset": 120,
+   "kind": "fixed",
+   "value": 8390152,
+   "what": "0x800608 (not documented): the loader writes (1 << 24) + an offset and waits until its top byte reads 0"
+  },
+  {
+   "offset": 124,
+   "kind": "fixed",
+   "value": 208,
+   "what": "the first offset the loader passes to 0x800608"
+  },
+  {
+   "offset": 128,
+   "kind": "symbol",
+   "value": "_tc32_boot_copy_size_align_256_",
+   "what": "the end of the RAM code"
+  },
+  {
+   "offset": 132,
+   "kind": "fixed",
+   "value": 127,
+   "what": "analog 0x7f (not documented): the loader tests bit 0"
+  },
+  {
+   "offset": 136,
+   "kind": "fixed",
+   "value": 8388792,
+   "what": "the analog port (not documented)"
+  },
+  {
+   "offset": 140,
+   "kind": "fixed",
+   "value": 8388704,
+   "what": "the resets and clock enables"
+  },
+  {
+   "offset": 144,
+   "kind": "fixed",
+   "value": 4278190080,
+   "what": "0x60-0x62 = 0, 0x63 = 0xff"
+  },
+  {
+   "offset": 148,
+   "kind": "unused",
+   "value": 8390026,
+   "what": "not loaded"
+  },
+  {
+   "offset": 364,
+   "kind": "fixed",
+   "value": 18,
+   "what": "IRQ mode"
+  },
+  {
+   "offset": 368,
+   "kind": "fixed",
+   "value": 19,
+   "what": "SVC mode"
+  },
+  {
+   "offset": 372,
+   "kind": "symbol",
+   "value": "z_interrupt_stacks + __z_interrupt_stack_SIZEOF",
+   "what": "IRQ mode's sp"
+  },
+  {
+   "offset": 376,
+   "kind": "symbol",
+   "value": "z_interrupt_stacks + __z_interrupt_stack_SIZEOF",
+   "what": "SVC mode's sp (the same address)"
+  },
+  {
+   "offset": 380,
+   "kind": "symbol",
+   "value": "__bss_start",
+   "what": ".bss"
+  },
+  {
+   "offset": 384,
+   "kind": "symbol",
+   "value": "__bss_end",
+   "what": ".bss end"
+  },
+  {
+   "offset": 388,
+   "kind": "fixed",
+   "value": 8390156,
+   "what": "0x80060c (not documented): written with _tc32_icache_lines_, 0x80060d with that + 1"
+  },
+  {
+   "offset": 392,
+   "kind": "symbol",
+   "value": "_ictag_start_",
+   "what": "the linker script's cache tag area"
+  },
+  {
+   "offset": 396,
+   "kind": "symbol",
+   "value": "_ictag_end_",
+   "what": "the end of that area"
+  },
+  {
+   "offset": 400,
+   "kind": "symbol",
+   "value": "_tc32_icache_lines_",
+   "what": "the RAM code's size in 256-byte units"
+  },
+  {
+   "offset": 404,
+   "kind": "symbol",
+   "value": "__data_region_load_start",
+   "what": ".data in flash"
+  },
+  {
+   "offset": 408,
+   "kind": "symbol",
+   "value": "__data_region_start",
+   "what": ".data"
+  },
+  {
+   "offset": 412,
+   "kind": "symbol",
+   "value": "__data_region_end",
+   "what": ".data end"
+  },
+  {
+   "offset": 416,
+   "kind": "fixed",
+   "value": 4294967295,
+   "what": "the fill value"
+  },
+  {
+   "offset": 420,
+   "kind": "symbol",
+   "value": "__data_region_start",
+   "what": "the fill's start"
+  },
+  {
+   "offset": 424,
+   "kind": "symbol",
+   "value": "__data_region_start + 0x20",
+   "what": "the fill's end: 32 bytes, which the .data copy then overwrites"
+  },
+  {
+   "offset": 428,
+   "kind": "unused",
+   "value": 0,
+   "what": "not loaded"
+  },
+  {
+   "offset": 432,
+   "kind": "unused",
+   "value": 0,
+   "what": "not loaded"
+  },
+  {
+   "offset": 436,
+   "kind": "unused",
+   "value": 0,
+   "what": "not loaded"
+  },
+  {
+   "offset": 440,
+   "kind": "unused",
+   "value": 0,
+   "what": "not loaded"
+  },
+  {
+   "offset": 444,
+   "kind": "fixed",
+   "value": 8390206,
+   "what": "0x80063e (not documented): gets the bytes read at 0x16 and 0x17 when 0x14 and 0x15 read 0x5a and 0xa5"
+  },
+  {
+   "offset": 448,
+   "kind": "fixed",
+   "value": 8388620,
+   "what": "0x80000c (not documented; 0x80000d at + 1): flash command 0xab"
+  }
+ ]
+}
