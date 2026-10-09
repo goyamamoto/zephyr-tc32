@@ -82,6 +82,36 @@ static const uint8_t n[32] = {0x51, 0x25, 0x63, 0xfc, 0xc2, 0xca, 0xb9, 0xf3, 0x
 			      0xa7, 0xad, 0xfa, 0xe6, 0xbc, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			      0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff};
 
+/*
+ * 2^64 * G and 2^255 * G: affine double-and-add over the integers modulo p
+ * in Python (pow(x, -1, p) for the inverses), the same points as OpenSSL's
+ * public key for those private keys.
+ */
+static const uint8_t g64x[32] = {
+	0x63, 0xdb, 0x14, 0x8e, 0xb4, 0x5c, 0xe7, 0x90,
+	0x7e, 0x1f, 0x65, 0xad, 0xaa, 0x3b, 0x49, 0x29,
+	0xde, 0x25, 0x6e, 0x32, 0x2e, 0x59, 0x92, 0x84,
+	0xa5, 0xaa, 0x11, 0x28, 0xbc, 0x22, 0xa8, 0x0f,
+};
+static const uint8_t g64y[32] = {
+	0xe7, 0x2e, 0x46, 0x5f, 0x54, 0x24, 0x11, 0xe4,
+	0xf5, 0x82, 0xfe, 0x50, 0x50, 0xa6, 0xb1, 0x34,
+	0x8b, 0x18, 0xdf, 0xb3, 0xbc, 0xd4, 0x4a, 0x6f,
+	0x0d, 0xa8, 0xdb, 0xf5, 0xe8, 0x4a, 0xf4, 0xbf,
+};
+static const uint8_t g255x[32] = {
+	0x54, 0x2b, 0x5f, 0x37, 0x8f, 0xec, 0x2d, 0xb5,
+	0x50, 0x23, 0xe9, 0xe3, 0x60, 0x35, 0xfe, 0x4e,
+	0xbc, 0x24, 0x15, 0x89, 0x11, 0xe9, 0x66, 0x50,
+	0x13, 0x23, 0x6b, 0x2e, 0x91, 0x0a, 0xb2, 0x77,
+};
+static const uint8_t g255y[32] = {
+	0xff, 0x67, 0xcc, 0xd6, 0xfc, 0x01, 0xa8, 0xca,
+	0xf1, 0xe0, 0x50, 0xe8, 0xa1, 0x3d, 0x62, 0xdf,
+	0x72, 0x8a, 0x03, 0xdd, 0xfc, 0x0b, 0xb1, 0xf7,
+	0xf7, 0xa3, 0xce, 0x25, 0x18, 0x29, 0xdc, 0xa3,
+};
+
 static uint32_t ram_word(uint32_t slot, uint32_t i)
 {
 	return sys_read32(slot + 4U * i);
@@ -159,6 +189,13 @@ ZTEST(tc32_p256, test_03_verify)
 	zassert_equal(tc32_p256_verify(ax, bad), -EINVAL, "y = p is not a coordinate");
 }
 
+/* k = 2^e: byte e / 8 holds bit e % 8. */
+static void pow2(uint8_t k[32], unsigned int e)
+{
+	memset(k, 0, 32);
+	k[e / 8U] = (uint8_t)BIT(e % 8U);
+}
+
 ZTEST(tc32_p256, test_04_scalar)
 {
 	uint8_t k[32] = {0};
@@ -166,10 +203,22 @@ ZTEST(tc32_p256, test_04_scalar)
 	zassert_false(tc32_p256_scalar_ok(k), "0");
 	k[0] = 1U;
 	zassert_true(tc32_p256_scalar_ok(k), "1");
-	zassert_false(tc32_p256_scalar_ok(n), "n");
+	pow2(k, 64);
+	zassert_true(tc32_p256_scalar_ok(k), "2^64");
+	pow2(k, 255);
+	zassert_true(tc32_p256_scalar_ok(k), "2^255");
+	memset(k, 0, 32);
+	k[31] = 0x01U;
+	zassert_true(tc32_p256_scalar_ok(k), "2^248, only the top octet not 0");
+	k[31] = 0xffU;
+	zassert_true(tc32_p256_scalar_ok(k), "0xff * 2^248, only the top octet not 0");
 	memcpy(k, n, 32);
 	k[0]--;
 	zassert_true(tc32_p256_scalar_ok(k), "n - 1");
+	zassert_false(tc32_p256_scalar_ok(n), "n");
+	memcpy(k, n, 32);
+	k[0]++;
+	zassert_false(tc32_p256_scalar_ok(k), "n + 1");
 	memset(k, 0xff, 32);
 	zassert_false(tc32_p256_scalar_ok(k), "2^256 - 1");
 	zassert_true(tc32_p256_scalar_ok(da) && tc32_p256_scalar_ok(db), "the test keys");
@@ -323,6 +372,22 @@ ZTEST(tc32_p256, test_10_cancel)
 	zassert_equal(tc32_p256_mul(da, NULL, NULL, x, y), 0, "a new operation runs");
 	zassert_mem_equal(x, ax, 32, "x of the debug public key");
 	zassert_mem_equal(y, ay, 32, "y of the debug public key");
+}
+
+/* Scalars whose low 64 bits are 0, through the start and the poll. */
+ZTEST(tc32_p256, test_11_high_scalar)
+{
+	uint8_t k[32], x[32], y[32];
+
+	pow2(k, 64);
+	zassert_equal(tc32_p256_mul_start(k, NULL, NULL), 0, "2^64 is taken");
+	zassert_equal(finish(x, y), 0);
+	zassert_mem_equal(x, g64x, 32, "x of 2^64 * G");
+	zassert_mem_equal(y, g64y, 32, "y of 2^64 * G");
+	pow2(k, 255);
+	zassert_equal(tc32_p256_mul(k, NULL, NULL, x, y), 0, "2^255 is taken");
+	zassert_mem_equal(x, g255x, 32, "x of 2^255 * G");
+	zassert_mem_equal(y, g255y, 32, "y of 2^255 * G");
 }
 
 ZTEST_SUITE(tc32_p256, NULL, NULL, before, NULL, NULL);

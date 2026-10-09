@@ -131,23 +131,21 @@ static void clear(uint32_t slot)
 
 bool tc32_p256_scalar_ok(const uint8_t k[32])
 {
-	/* 1 <= k < n: compare from the most significant word down. */
-	for (int i = 7; i >= 0; i--) {
-		uint32_t w = sys_get_le32(&k[4 * i]);
+	/*
+	 * 1 <= k < n over all 32 octets: k - n borrows out of the top word when
+	 * k < n, and k is 0 when no word has a bit set.
+	 */
+	uint32_t borrow = 0U;
+	uint32_t any = 0U;
 
-		if (w < p256_n[i]) {
-			for (int j = 0; j < 8; j++) {
-				if (k[j] != 0U) {
-					return true;
-				}
-			}
-			return false; /* 0 */
-		}
-		if (w > p256_n[i]) {
-			return false;
-		}
+	for (uint32_t i = 0; i < 8U; i++) {
+		uint32_t w = sys_get_le32(&k[4U * i]);
+		uint64_t d = (uint64_t)w - p256_n[i] - borrow;
+
+		borrow = (uint32_t)(d >> 63);
+		any |= w;
 	}
-	return false; /* n */
+	return (borrow != 0U) && (any != 0U);
 }
 
 static int start(uint8_t mc, const uint8_t *px, const uint8_t *py, const uint8_t *k)
