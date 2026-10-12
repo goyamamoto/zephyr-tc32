@@ -20,7 +20,8 @@ Zephyr for the Telink TC32
 
 This repository, ``zephyr-tc32``, is Zephyr v4.5.0-rc1 with support for
 Telink's TC32 CPU and the TLSR8278 SoC. `TC32.md <TC32.md>`_ describes what is
-added and how to build and test it; ``NOTICE`` names the authors. The licence
+added, how to build and test it, and how it was written; ``NOTICE`` names the
+authors. The licence
 is Apache-2.0, as upstream's. Everything below is upstream Zephyr's README.
 
 
